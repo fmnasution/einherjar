@@ -26,7 +26,7 @@
    (fn [{:keys [uri] :as request}]
      (let [error-handler (or error-handler
                              (-> (ring.response/internal-server-error)
-                                 (ring.response/content-type "text/html")
+                                 (ring.response/content-type "text/plain")
                                  (constantly)))]
        (encore/catching
         (handler request)
@@ -38,7 +38,7 @@
                (error-handler request)))
          error2
          (do (timbre/error error2 "`error-handler` error at:" uri)
-             (error-handler request)))))))
+             (ring.response/internal-server-error)))))))
   ([handler]
    (wrap-exception handler nil)))
 

@@ -37,7 +37,7 @@
     [:title "einherjar"]]
    [:body
     [:div#app]
-    (include-js (asset-path request "js/einherjar/app.js"))]])
+    (include-js (asset-path request "einherjar/app.js"))]])
 
 (defn index-resource
   [{:keys [request-method] :as request}]

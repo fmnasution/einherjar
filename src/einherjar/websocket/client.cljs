@@ -30,7 +30,7 @@
   (sente/chsk-disconnect! chsk)
   (async/close! recv-chan))
 
-(defstate wesocket-client
+(defstate websocket-client
   :start (do (timbre/info "Starting websocket client...")
              (start-websocket-client! (:websocket-client @cfg.clt/config)))
   :stop  (do (timbre/info "Stopping websocket client...")

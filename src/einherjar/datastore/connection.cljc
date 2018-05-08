@@ -6,13 +6,14 @@
    [taoensso.encore :as encore]
    [einherjar.datastore.protocols :as dtst.prt]
    [einherjar.datastore.impl.datascript :as dtst.ipl.dts]
-   [einherjar.config.server :as cfg.srv]
    #?@(:clj [[clojure.spec.alpha :as spec]
              [clojure.core.async :as async]
              [datomic.api :as datomic]
+             [einherjar.config.server :as cfg.srv]
              [einherjar.datastore.impl.datomic :as dtst.ipl.dtm]]
        :cljs [[cljs.spec.alpha :as spec]
-              [cljs.core.async :as async]])))
+              [cljs.core.async :as async]
+              [einherjar.config.client :as cfg.clt]])))
 
 ;; ---- datastore database ----
 
@@ -61,11 +62,15 @@
 (defn- stop-datastore-conn!
   [datastore-conn]
   (when (= :datomic (dtst.prt/kind datastore-conn))
-    (dtst.ipl.dtm/release-datomic-connection! datastore-conn)))
+    (encore/if-clj
+     (dtst.ipl.dtm/release-datomic-connection! datastore-conn)
+     nil)))
 
 (defstate datastore-connection
   :start (do (timbre/info "Starting datastore connection...")
-             (start-datastore-conn! (:datastore-connection @cfg.srv/config)))
+             (start-datastore-conn!
+              (:datastore-connection
+               (encore/if-clj @cfg.srv/config @cfg.clt/config))))
   :stop  (do (timbre/info "Stopping datastore connection...")
              (stop-datastore-conn! @datastore-connection)))
 

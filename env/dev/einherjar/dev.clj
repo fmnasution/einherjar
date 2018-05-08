@@ -3,6 +3,7 @@
    [clojure.spec.alpha :as spec]
    [clojure.tools.namespace.repl :refer [refresh]]
    [mount.core :as mount]
+   [einherjar.figwheel]
    [einherjar.app]))
 
 (defn toggle-assertion!

@@ -3,7 +3,7 @@
    [mount.core :refer [defstate]]
    [bidi.bidi :as router]
    [taoensso.timbre :as timbre]
-   [einherjar.routes.routes :as rtr.rts]))
+   [einherjar.router.routes :as rtr.rts]))
 
 (defn- websocket-server-uri
   []
@@ -11,4 +11,5 @@
 
 (defstate config
   :start (do (timbre/info "Reading config...")
-             {:websocket-client {:uri (websocket-server-uri)}}))
+             {:datastore-connection {:kind :datascript}
+              :websocket-client     {:uri (websocket-server-uri)}}))

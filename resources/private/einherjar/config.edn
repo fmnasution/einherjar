@@ -1,4 +1,15 @@
 {:web-server           #profile {:dev {:port    8080
                                        :timeout 100}}
  :datastore-connection #profile {:dev {:kind :datomic
-                                       :uri  "datomic:mem://einherjar-dev"}}}
+                                       :uri  "datomic:mem://einherjar-dev"}}
+ :figwheel-server      {:all-builds       [{:id           "dev"
+                                            :source-paths ["src/"]
+                                            :compiler     {:main          einherjar.app
+                                                           :output-to     "resources/public/einherjar/app.js"
+                                                           :output-dir    "resources/public/einherjar/out"
+                                                           :source-map    true
+                                                           :optimizations :none
+                                                           :pretty-print  true}
+                                            :figwheel     true}]
+                        :figwheel-options #profile {:dev {:server-port 9090}}
+                        :build-ids        #profile {:dev ["dev"]}}}

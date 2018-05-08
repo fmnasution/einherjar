@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [mount.core :refer [defstate]]
+   [bidi.bidi :as ring]
    [bidi.ring :as ring.router]
    [ring.util.http-response :as ring.response]
    [ring.middleware.defaults :as ring.defaults]
@@ -10,7 +11,9 @@
    [taoensso.encore :as encore]
    [einherjar.router.routes :as rtr.rts]
    [einherjar.websocket.server :as ws.srv]
-   [einherjar.middleware :as mdw]))
+   [einherjar.middleware :as mdw]
+   [einherjar.router.resources :as rtr.rsc]
+   [einherjar.websocket.resources :as ws.rsc]))
 
 ;; ---- ring middleware ----
 
@@ -64,7 +67,10 @@
 
 ;; ---- ring router ----
 
-(defrecord RingRouter [routes resources])
+(defrecord RingRouter [routes resources]
+  ring/RouteProvider
+  (routes [ring-router]
+    (:routes ring-router)))
 
 (defn- wrap-ring-router
   [handler ring-router]
@@ -73,10 +79,9 @@
 
 (defn- resources
   []
-  {::rtr.rts/index (constantly
-                    {:status  200
-                     :body    "Hello World!"
-                     :headers {"content-type" "text/html"}})})
+  {::rtr.rts/websocket ws.rsc/websocket-server-resource
+   ::rtr.rts/asset     rtr.rsc/asset-resource
+   ::rtr.rts/index     rtr.rsc/index-resource})
 
 (defstate ring-router
   :start (do (timbre/info "Creating ring router...")

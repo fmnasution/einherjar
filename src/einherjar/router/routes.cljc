@@ -2,4 +2,6 @@
 
 (defn server-routes
   []
-  ["" {"/" ::index}])
+  ["" {"/chsk"             ::websocket
+       "/resources/public" {true ::asset}
+       "/"                 ::index}])

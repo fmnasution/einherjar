@@ -17,6 +17,7 @@
                  [org.clojure/core.async "0.4.474"]
                  [mount "0.1.12"]
                  [bidi "2.1.3"]
+                 [rum "0.11.2"]
                  [datascript "0.16.5"]
                  [com.taoensso/sente "1.12.0"]
                  [com.taoensso/timbre "4.10.0"]

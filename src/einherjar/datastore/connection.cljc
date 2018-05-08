@@ -66,8 +66,8 @@
 (defstate datastore-connection
   :start (do (timbre/info "Starting datastore connection...")
              (start-datastore-conn! (:datastore-connection @cfg.srv/config)))
-  :stop (do (timbre/info "Stopping datastore connection...")
-            (stop-datastore-conn! @datastore-connection)))
+  :stop  (do (timbre/info "Stopping datastore connection...")
+             (stop-datastore-conn! @datastore-connection)))
 
 ;; ---- spec ----
 

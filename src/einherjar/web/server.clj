@@ -27,8 +27,8 @@
   :start (do (timbre/info "Starting web server...")
              (start-web-server! @rtr.srv/ring-handler
                                 (:web-server @cfg.srv/config)))
-  :stop (do (timbre/info "Stopping web server...")
-            (stop-web-server! @web-server)))
+  :stop  (do (timbre/info "Stopping web server...")
+             (stop-web-server! @web-server)))
 
 ;; ---- spec ----
 

@@ -2,8 +2,8 @@
   (:require
    [clojure.string :as string]
    [mount.core :refer [defstate]]
-   [bidi.bidi :as ring]
-   [bidi.ring :as ring.router]
+   [bidi.bidi :as router]
+   [bidi.ring :as router.ring]
    [ring.util.http-response :as ring.response]
    [ring.middleware.defaults :as ring.defaults]
    [muuntaja.middleware :as ring.muuntaja]
@@ -68,7 +68,7 @@
 ;; ---- ring router ----
 
 (defrecord RingRouter [routes resources]
-  ring/RouteProvider
+  router/RouteProvider
   (routes [ring-router]
     (:routes ring-router)))
 
@@ -93,7 +93,7 @@
   ([{:keys [routes resources] :as ring-router}
     {:keys [entries] :as ring-middleware}
     not-found-handler]
-   (let [handler           (ring.router/make-handler routes resources)
+   (let [handler           (router.ring/make-handler routes resources)
          not-found-handler (or not-found-handler
                                (-> (ring.response/not-found)
                                    (ring.response/content-type "text/plain")

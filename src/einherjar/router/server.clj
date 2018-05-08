@@ -9,6 +9,7 @@
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
    [einherjar.router.routes :as rtr.rts]
+   [einherjar.websocket.server :as ws.srv]
    [einherjar.middleware :as mdw]))
 
 ;; ---- ring middleware ----
@@ -54,10 +55,12 @@
 
 (defstate ring-middleware
   :start (do (timbre/info "Creating ring middleware...")
-             (->RingMiddleware [wrap-trailing-slash
-                                wrap-exception
-                                wrap-default
-                                wrap-format])))
+             (->RingMiddleware
+              [wrap-trailing-slash
+               wrap-exception
+               wrap-default
+               wrap-format
+               [ws.srv/wrap-websocket-server @ws.srv/websocket-server]])))
 
 ;; ---- ring router ----
 

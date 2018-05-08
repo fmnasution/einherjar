@@ -1,2 +1,4 @@
-{:web-server #profile {:dev {:port    8080
-                             :timeout 100}}}
+{:web-server           #profile {:dev {:port    8080
+                                       :timeout 100}}
+ :datastore-connection #profile {:dev {:kind :datomic
+                                       :uri  "datomic:mem://einherjar-dev"}}}

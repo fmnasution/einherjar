@@ -12,13 +12,11 @@
 
 (defrecord WebServer [server config])
 
-(defn- web-server-config
-  [config]
-  (spec/assert ::web-server-config (:web-server config)))
-
 (defn- start-web-server!
   [handler config]
-  (let [server (httpkit/run-server handler config)]
+  (let [server (httpkit/run-server
+                handler
+                (spec/assert ::web-server-config config))]
     (->WebServer server config)))
 
 (defn- stop-web-server!
@@ -28,7 +26,7 @@
 (defstate web-server
   :start (do (timbre/info "Starting web server...")
              (start-web-server! @rtr.srv/ring-handler
-                                (web-server-config @cfg.srv/config)))
+                                (:web-server @cfg.srv/config)))
   :stop (do (timbre/info "Stopping web server...")
             (stop-web-server! @web-server)))
 

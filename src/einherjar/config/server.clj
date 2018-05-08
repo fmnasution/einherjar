@@ -9,8 +9,8 @@
 ;; ---- config ----
 
 (defn- read-config!
-  [config-input]
-  (let [{:keys [source option]} (spec/assert ::config-input config-input)]
+  [input]
+  (let [{:keys [source option]} (spec/assert ::config-input input)]
     (assoc (aero/read-config source option) ::option option)))
 
 (defstate config

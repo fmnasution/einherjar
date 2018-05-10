@@ -32,8 +32,9 @@
   #(datascript/unlisten! conn ::tx-report))
 
 (defn- start-datastore-tx-monitor!
-  ([{:keys [conn] :as datastore-connection} tx-report-chan]
+  ([datastore-connection tx-report-chan]
    (let [kind    (dtst.prt/kind datastore-connection)
+         conn    (dtst.prt/internal datastore-connection)
          stopper (case kind
                    :datomic
                    (encore/if-clj
@@ -60,7 +61,8 @@
 ;; ---- datastore tx pipeliner ----
 
 (defstate datastore-tx-pipeliner
-  :start (do (timbre/info "Pipelining tx from datastore connection"
+  :start (do (timbre/info "Pipelining tx"
+                          "from datastore connection"
                           "to event dispatcher...")
              (async/pipeline
               1

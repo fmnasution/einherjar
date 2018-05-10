@@ -63,7 +63,8 @@
        :ws/?reply-fn    ?reply-fn}])
 
 (defstate websocket-server-pipeliner
-  :start (do (timbre/info "Pipelining remote event from websocket server"
+  :start (do (timbre/info "Pipelining remote event"
+                          "from websocket server"
                           "to event dispatcher...")
              (async/pipeline
               1

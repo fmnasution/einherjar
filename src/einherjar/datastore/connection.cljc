@@ -32,7 +32,7 @@
 
 ;; ---- datastore connection ----
 
-(defrecord DatastoreConnection [config conn]
+(defrecord DatastoreConnection [conn]
   dtst.prt/IDatastore
   (kind [this]
     (dtst.prt/kind (:conn this)))
@@ -47,32 +47,37 @@
   (db [this]
     (->DatastoreDatabase (dtst.prt/db (:conn this)))))
 
-(defn- start-datastore-conn!
+(defn- start-datastore-connection!
   [config]
-  (let [{:keys [kind]} (spec/assert ::datastore-connection-config config)]
-    (case kind
-      :datomic
-      (encore/if-clj
-       (dtst.ipl.dtm/start-datomic-connection! config)
-       nil)
+  (let [{:keys [kind]} (spec/assert ::datastore-connection-config config)
+        conn           (case kind
+                         :datomic
+                         (encore/if-clj
+                          (dtst.ipl.dtm/start-datomic-connection! config)
+                          nil)
 
-      :datascript
-      (dtst.ipl.dts/start-datascript-connection! config))))
+                         :datascript
+                         (dtst.ipl.dts/start-datascript-connection! config))]
+    (->DatastoreConnection conn)))
 
-(defn- stop-datastore-conn!
-  [datastore-conn]
+(defn- stop-datastore-connection!
+  [{:keys [conn] :as datastore-conn}]
   (when (= :datomic (dtst.prt/kind datastore-conn))
     (encore/if-clj
-     (dtst.ipl.dtm/release-datomic-connection! datastore-conn)
+     (dtst.ipl.dtm/release-datomic-connection! conn)
      nil)))
 
 (defstate datastore-connection
   :start (do (timbre/info "Starting datastore connection...")
-             (start-datastore-conn!
+             (start-datastore-connection!
               (:datastore-connection
                (encore/if-clj @cfg.srv/config @cfg.clt/config))))
   :stop  (do (timbre/info "Stopping datastore connection...")
-             (stop-datastore-conn! @datastore-connection)))
+             (stop-datastore-connection! @datastore-connection)))
+
+(defn db
+  [datastore-connection]
+  (dtst.prt/db datastore-connection))
 
 ;; ---- spec ----
 

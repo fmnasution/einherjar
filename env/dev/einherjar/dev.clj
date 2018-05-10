@@ -2,6 +2,7 @@
   (:require
    [clojure.spec.alpha :as spec]
    [clojure.tools.namespace.repl :refer [refresh]]
+   [figwheel-sidecar.repl-api :as figwheel]
    [mount.core :as mount]
    [einherjar.figwheel]
    [einherjar.app]))
@@ -25,3 +26,7 @@
   []
   (stop!)
   (refresh :after 'einherjar.dev/start!))
+
+(defn cljs-repl!
+  []
+  (figwheel/cljs-repl))

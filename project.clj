@@ -18,6 +18,7 @@
                  [mount "0.1.12"]
                  [bidi "2.1.3"]
                  [rum "0.11.2"]
+                 [cljs-ajax "0.7.3"]
                  [datascript "0.16.5"]
                  [com.taoensso/sente "1.12.0"]
                  [com.taoensso/timbre "4.10.0"]
@@ -27,10 +28,12 @@
                  [com.cognitect/transit-cljs "0.8.256"]]
   :source-paths ["src/"]
   :resource-paths ["resources/"]
-  :profiles {:dev {:source-paths ["env/dev/"]
+  :profiles {:dev {:clean-targets ^{:protect false}
+                   [:target-path "resources/public/einherjar"]
+                   :source-paths ["env/dev/"]
                    :dependencies [[org.clojure/tools.nrepl "0.2.13"]
                                   [cider/piggieback "0.3.2"]
-                                  [figwheel-sidecar "0.5.15"]
+                                  [figwheel-sidecar "0.5.16"]
                                   [org.clojure/tools.namespace "0.3.0-alpha4"]]
                    :plugins [[refactor-nrepl "2.4.0-SNAPSHOT"]]
                    :repl-options {:nrepl-middleware

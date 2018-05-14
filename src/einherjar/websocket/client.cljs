@@ -8,11 +8,16 @@
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
    [einherjar.config.client :as cfg.clt]
+   [einherjar.async.protocols :as asnc.prt]
+   [einherjar.async.pipeliner :as asnc.ppln]
    [einherjar.async.event :as asnc.evt]))
 
 ;; ---- websocket client ----
 
-(defrecord WebsocketClient [chsk recv-chan send! state])
+(defrecord WebsocketClient [chsk recv-chan send! state]
+  asnc.prt/ISource
+  (source-chan [websocket-client]
+    (:recv-chan websocket-client)))
 
 (defn- start-websocket-client!
   [config]
@@ -46,14 +51,12 @@
 (defstate websocket-client-pipeliner
   :start (do (timbre/info "Pipelining remote event from websocket client"
                           "to event dispatcher...")
-             (async/pipeline
-              1
-              (:event-chan @asnc.evt/event-dispatcher)
-              (map remote-event->local-event)
-              (:recv-chan @websocket-client)
-              false
-              (fn [error]
-                [::error {:error error}]))))
+             (asnc.ppln/create-pipeliner
+              {:flow-to       @asnc.evt/event-dispatcher
+               :xform-fn      #(map remote-event->local-event)
+               :flow-from     @websocket-client
+               :error-handler (fn [error]
+                                [::error {:error error}])})))
 
 ;; ---- spec ----
 

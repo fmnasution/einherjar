@@ -4,6 +4,8 @@
    [datascript.core :as datascript]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
+   [einherjar.async.protocols :as asnc.prt]
+   [einherjar.async.pipeliner :as asnc.ppln]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.protocols :as dtst.prt]
    [einherjar.datastore.connection :as dtst.conn]
@@ -13,7 +15,10 @@
 
 ;; ---- datastore tx monitor ----
 
-(defrecord DatastoreTxMonitor [tx-report-chan stopper])
+(defrecord DatastoreTxMonitor [tx-report-chan stopper]
+  asnc.prt/ISource
+  (source-chan [datastore-tx-monitor]
+    (:tx-report-chan datastore-tx-monitor)))
 
 (encore/if-clj
  (defn- monitor-datomic-tx!
@@ -60,16 +65,17 @@
 
 ;; ---- datastore tx pipeliner ----
 
+(defn- tx-report->event
+  [tx-report]
+  [:datastore-connection/tx-report tx-report])
+
 (defstate datastore-tx-pipeliner
   :start (do (timbre/info "Pipelining tx"
                           "from datastore connection"
                           "to event dispatcher...")
-             (async/pipeline
-              1
-              (:event-chan @asnc.evt/event-dispatcher)
-              (map (fn [tx-report]
-                     [:datastore-connection/tx-report tx-report]))
-              (:tx-report-chan @datastore-tx-monitor)
-              false
-              (fn [error]
-                [::error {:error error}]))))
+             (asnc.ppln/create-pipeliner
+              {:flow-to       @asnc.evt/event-dispatcher
+               :xform-fn      #(map tx-report->event)
+               :flow-from     @datastore-tx-monitor
+               :error-handler (fn [error]
+                                [::error {:error error}])})))

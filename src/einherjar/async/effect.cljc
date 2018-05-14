@@ -3,6 +3,8 @@
    [mount.core :refer [defstate]]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
+   [einherjar.async.protocols :as asnc.prt]
+   [einherjar.async.pipeliner :as asnc.ppln]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj [[clojure.core.async :as async :refer [go-loop]]]
@@ -37,7 +39,10 @@
           (recur))))
     stop-chan))
 
-(defrecord EffectExecutor [effect-chan stop-chan])
+(defrecord EffectExecutor [effect-chan stop-chan]
+  asnc.prt/ISink
+  (sink-chan [effect-executor]
+    (:effect-chan effect-executor)))
 
 (defn- start-effect-executor!
   ([event-dispatcher services effect-chan]
@@ -65,28 +70,47 @@
     [services effect]
     (handler services effect)))
 
-;; ---- event dispatcher pipeliner ----
+;; ---- event consumer ----
 
 (defmulti -event->effects dispatch-by-id)
 
-(defn event->effects
+(defn- event->effects
   [datastore-connection]
   (fn [event]
     (let [datastore-database (dtst.conn/db datastore-connection)]
       (not-empty (-event->effects datastore-database event)))))
 
-(defstate event-dispatcher-pipeliner
-  :start (do (timbre/info "Pipelining event"
-                          "from event dispatcher"
-                          "to effect executor...")
-             (async/pipeline 1
-                             (:effect-chan @effect-executor)
-                             (mapcat
-                              (event->effects @dtst.conn/datastore-connection))
-                             (:event-chan @asnc.evt/event-dispatcher)
-                             false
-                             (fn [error]
-                               [::error {:error error}]))))
+(defrecord EventConsumer [stop-chan])
+
+(defn- start-event-consumer!
+  [{:keys [event-chan] :as event-dispatcher}
+   {:keys [effect-chan] :as effect-executor}
+   datastore-connection]
+  (let [stop-chan      (async/chan)
+        event-consumer (event->effects datastore-connection)]
+    (go-loop []
+      (let [[event chan] (async/alts! [event-chan stop-chan] :priority true)
+            stop?        (or (= stop-chan chan) (nil? event))]
+        (when-not stop?
+          (encore/catching
+           (when-let [effects (event-consumer event)]
+             (run! #(async/>! effect-chan %) effects))
+           error
+           (async/>! event-chan [::error {:error error}])))
+        (recur)))
+    (->EventConsumer stop-chan)))
+
+(defn- stop-event-consumer!
+  [{:keys [stop-chan] :as event-consumer}]
+  (async/close! stop-chan))
+
+(defstate event-consumer
+  :start (do (timbre/info "Starting event consumer...")
+             (start-event-consumer! @asnc.evt/event-dispatcher
+                                    @effect-executor
+                                    @dtst.conn/datastore-connection))
+  :stop  (do (timbre/info "Stopping event consumer...")
+             (stop-event-consumer! @event-consumer)))
 
 (defn reg-event
   [id handler]
@@ -107,3 +131,4 @@
  :default
  (fn [_ [id]]
    (timbre/warn "Unknown effect:" id)))
+

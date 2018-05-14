@@ -6,7 +6,8 @@
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj [[clojure.core.async :as async :refer [go-loop]]]
-       :cljs [[cljs.core.async :as async]]))
+       :cljs [[cljs.core.async :as async]
+              [einherjar.web.ajax.client :as wb.jx.clt]]))
   #?(:cljs
      (:require-macros
       [cljs.core.async.macros :refer [go-loop]])))
@@ -56,7 +57,8 @@
              (start-effect-executor!
               @asnc.evt/event-dispatcher
               {:event-dispatcher     @asnc.evt/event-dispatcher
-               :datastore-connection @dtst.conn/datastore-connection}))
+               :datastore-connection @dtst.conn/datastore-connection
+               #?@(:cljs [:server-ajax-caller @wb.jx.clt/server-ajax-caller])}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 

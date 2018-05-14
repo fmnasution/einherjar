@@ -21,8 +21,9 @@
         {:keys [chsk ch-recv send-fn state]}
         (sente/make-channel-socket!
          uri
-         {:type   :auto
-          :packer (get-transit-packer)})]
+         {:type           :auto
+          :packer         (get-transit-packer)
+          :wrap-recv-evs? false})]
     (->WebsocketClient chsk ch-recv send-fn state)))
 
 (defn- stop-websocket-client!
@@ -54,6 +55,10 @@
               (:recv-chan @websocket-client)
               (fn [error]
                 [:websocket-client-pipeliner/error {:error error}]))))
+
+(defn csrf-token
+  [{:keys [state] :as websocket-client}]
+  (:csrf-token @state))
 
 ;; ---- spec ----
 

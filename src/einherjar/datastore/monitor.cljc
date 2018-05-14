@@ -71,7 +71,7 @@
              (async/pipeline
               1
               (:event-chan @asnc.evt/event-dispatcher)
-              (keep tx-report->event)
+              (map tx-report->event)
               (:tx-report-chan @datastore-tx-monitor)
               (fn [error]
                 [:datastore-tx-pipeliner/error {:error error}]))))

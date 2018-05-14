@@ -1,7 +1,6 @@
 (ns einherjar.app
   (:require
    [mount.core :as mount]
-   [taoensso.encore :as encore]
    #?@(:clj [[einherjar.config.server]
              [einherjar.web.server]
              [einherjar.router.server]
@@ -9,7 +8,8 @@
        :cljs [[einherjar.config.client]
               [einherjar.element.react]
               [einherjar.router.client]
-              [einherjar.websocket.client]])
+              [einherjar.websocket.client]
+              [einherjar.web.ajax.client]])
    [einherjar.async.effect]
    [einherjar.async.event]
    [einherjar.datastore.connection]
@@ -17,8 +17,8 @@
 
 (mount/in-cljc-mode)
 
-(encore/if-cljs
- (enable-console-print!))
+#?(:cljs
+   (enable-console-print!))
 
-(encore/if-cljs
- (mount/start))
+#?(:cljs
+   (mount/start))

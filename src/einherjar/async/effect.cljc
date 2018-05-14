@@ -3,8 +3,6 @@
    [mount.core :refer [defstate]]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
-   [einherjar.async.protocols :as asnc.prt]
-   [einherjar.async.pipeliner :as asnc.ppln]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj [[clojure.core.async :as async :refer [go-loop]]]
@@ -35,14 +33,11 @@
           (encore/catching
            (execute-effect! services effect)
            error
-           (async/>! event-chan [::error {:error error}]))
+           (async/>! event-chan [:effect-executor/error {:error error}]))
           (recur))))
     stop-chan))
 
-(defrecord EffectExecutor [effect-chan stop-chan]
-  asnc.prt/ISink
-  (sink-chan [effect-executor]
-    (:effect-chan effect-executor)))
+(defrecord EffectExecutor [effect-chan stop-chan])
 
 (defn- start-effect-executor!
   ([event-dispatcher services effect-chan]
@@ -60,7 +55,8 @@
   :start (do (timbre/info "Starting effect executor...")
              (start-effect-executor!
               @asnc.evt/event-dispatcher
-              {}))
+              {:event-dispatcher     @asnc.evt/event-dispatcher
+               :datastore-connection @dtst.conn/datastore-connection}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 
@@ -96,7 +92,7 @@
            (when-let [effects (event-consumer event)]
              (run! #(async/>! effect-chan %) effects))
            error
-           (async/>! event-chan [::error {:error error}])))
+           (async/>! event-chan [:event-consumer/error {:error error}])))
         (recur)))
     (->EventConsumer stop-chan)))
 
@@ -131,4 +127,3 @@
  :default
  (fn [_ [id]]
    (timbre/warn "Unknown effect:" id)))
-

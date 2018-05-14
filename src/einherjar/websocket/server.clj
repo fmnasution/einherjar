@@ -6,10 +6,7 @@
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
    [taoensso.sente :as sente]
    [taoensso.timbre :as timbre]
-   [einherjar.async.protocols :as asnc.prt]
-   [einherjar.async.pipeliner :as asnc.ppln]
-   [einherjar.async.event :as asnc.evt]
-   [einherjar.async.protocols :as asnc.prt]))
+   [einherjar.async.event :as asnc.evt]))
 
 ;; ---- websocket server ----
 
@@ -17,10 +14,7 @@
                             ring-ajax-post
                             recv-chan
                             send!
-                            connected-uids]
-  asnc.prt/ISource
-  (source-chan [websocket-server]
-    (:recv-chan websocket-server)))
+                            connected-uids])
 
 (defn- start-websocket-server!
   []
@@ -72,9 +66,10 @@
   :start (do (timbre/info "Pipelining remote event"
                           "from websocket server"
                           "to event dispatcher...")
-             (asnc.ppln/create-pipeliner
-              {:flow-to       @asnc.evt/event-dispatcher
-               :xform-fn      #(map remote-event->local-event)
-               :flow-from     @websocket-server
-               :error-handler (fn [error]
-                                [::error {:error error}])})))
+             (async/pipeline
+              1
+              (:event-chan @asnc.evt/event-dispatcher)
+              (map remote-event->local-event)
+              (:recv-chan @websocket-server)
+              (fn [error]
+                [:websocket-server-pipeliner/error {:error error}]))))

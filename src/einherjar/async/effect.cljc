@@ -81,12 +81,12 @@
               @asnc.evt/event-dispatcher
               {:event-dispatcher     asnc.evt/event-dispatcher
                :datastore-connection dtst.conn/datastore-connection
-               #?@(:clj [:websocket-server ws.srv/websocket-server
-                         :config           cfg.srv/config]
+               :config               #?(:clj  cfg.srv/config
+                                        :cljs cfg.clt/config)
+               #?@(:clj [:websocket-server ws.srv/websocket-server]
                    :cljs [:websocket-client   ws.clt/websocket-client
                           :server-ajax-caller wb.jx.clt/server-ajax-caller
-                          :rum-element        el.rct/rum-element
-                          :config             cfg.clt/config])}))
+                          :rum-element        el.rct/rum-element])}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 

@@ -9,6 +9,7 @@
    [einherjar.websocket.handler]
    [einherjar.datastore.handler]
    [einherjar.web.handler]
+   [einherjar.router.handler]
    #?@(:clj [[einherjar.config.server]
              [einherjar.web.server]
              [einherjar.router.server]

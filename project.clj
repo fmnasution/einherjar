@@ -31,7 +31,7 @@
   :profiles {:dev {:clean-targets ^{:protect false}
                    [:target-path "resources/public/einherjar"]
                    :source-paths ["env/dev/"]
-                   :dependencies [[org.clojure/tools.nrepl "0.2.13"]
+                   :dependencies [[cider/nrepl "0.3.0"]
                                   [cider/piggieback "0.3.2"]
                                   [figwheel-sidecar "0.5.16"]
                                   [org.clojure/tools.namespace "0.3.0-alpha4"]]

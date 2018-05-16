@@ -6,8 +6,10 @@
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj [[clojure.core.async :as async :refer [go-loop]]
+             [einherjar.config.server :as cfg.srv]
              [einherjar.websocket.server :as ws.srv]]
        :cljs [[cljs.core.async :as async]
+              [einherjar.config.client :as cfg.clt]
               [einherjar.web.ajax.client :as wb.jx.clt]
               [einherjar.element.react :as el.rct]
               [einherjar.websocket.client :as ws.clt]]))
@@ -18,6 +20,12 @@
 (defn- dispatch-by-id
   [_ [id]]
   id)
+
+(defn- error?
+  [v]
+  (boolean (when (vector? v)
+             (let [[_ _ metadata] v]
+               (:error? metadata false)))))
 
 ;; ---- effect executor ----
 
@@ -31,14 +39,26 @@
   [{:keys [event-chan] :as event-dispatcher} services effect-chan]
   (let [stop-chan (async/chan)]
     (go-loop []
-      (let [[effect chan] (async/alts! [effect-chan stop-chan] :priority true)
-            stop?         (or (= stop-chan chan) (nil? effect))]
-        (when-not stop?
-          (encore/catching
-           (execute-effect! services effect)
-           error
-           (async/>! event-chan [:effect-executor/error {:error error}]))
-          (recur))))
+      (encore/when-let [[effect chan]
+                        (async/alts! [effect-chan stop-chan] :priority true)
+
+                        continue?
+                        (and (not= stop-chan chan) (some? effect))]
+        (encore/when-let [services
+                          (encore/map-vals deref services)
+
+                          result
+                          (encore/catching
+                           (execute-effect! services effect)
+                           error
+                           [:effect-executor/error
+                            {:error error}
+                            {:error? true}])
+
+                          error-happened?
+                          (error? result)]
+          (async/>! event-chan result))
+        (recur)))
     stop-chan))
 
 (defrecord EffectExecutor [effect-chan stop-chan])
@@ -59,12 +79,14 @@
   :start (do (timbre/info "Starting effect executor...")
              (start-effect-executor!
               @asnc.evt/event-dispatcher
-              {:event-dispatcher     @asnc.evt/event-dispatcher
-               :datastore-connection @dtst.conn/datastore-connection
-               #?@(:clj [:websocket-server @ws.srv/websocket-server]
-                   :cljs [:websocket-client   @ws.clt/websocket-client
-                          :server-ajax-caller @wb.jx.clt/server-ajax-caller
-                          :rum-element        @el.rct/rum-element])}))
+              {:event-dispatcher     asnc.evt/event-dispatcher
+               :datastore-connection dtst.conn/datastore-connection
+               #?@(:clj [:websocket-server ws.srv/websocket-server
+                         :config           cfg.srv/config]
+                   :cljs [:websocket-client   ws.clt/websocket-client
+                          :server-ajax-caller wb.jx.clt/server-ajax-caller
+                          :rum-element        el.rct/rum-element
+                          :config             cfg.clt/config])}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 
@@ -90,18 +112,35 @@
   [{:keys [event-chan] :as event-dispatcher}
    {:keys [effect-chan] :as effect-executor}
    datastore-connection]
-  (let [stop-chan      (async/chan)
-        event-consumer (event->effects datastore-connection)]
+  (let [stop-chan        (async/chan)
+        event-to-effects (event->effects datastore-connection)]
     (go-loop []
-      (let [[event chan] (async/alts! [event-chan stop-chan] :priority true)
-            stop?        (or (= stop-chan chan) (nil? event))]
-        (when-not stop?
-          (encore/catching
-           (when-let [effects (event-consumer event)]
-             (run! #(async/>! effect-chan %) effects))
-           error
-           (async/>! event-chan [:event-consumer/error {:error error}]))
-          (recur))))
+      (encore/when-let [[event chan]
+                        (async/alts! [event-chan stop-chan] :priority true)
+
+                        continue?
+                        (and (not= stop-chan chan) (some? event))]
+        (encore/when-let [effects
+                          (encore/catching
+                           (event-to-effects event)
+                           error
+                           [[:event-consumer/error
+                             {:error error}
+                             {:error? true}]])
+
+                          selected-chan
+                          (encore/cond!
+                           (every? error? effects)
+                           event-chan
+
+                           :let [not-error? (complement error?)]
+
+                           (every? not-error? effects)
+                           effect-chan)]
+          (doseq [effect effects]
+            (async/>! selected-chan effect))
+          #_(run! #(async/>! selected-chan %) effects))
+        (recur)))
     (->EventConsumer stop-chan)))
 
 (defn- stop-event-consumer!

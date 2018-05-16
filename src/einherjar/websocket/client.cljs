@@ -81,7 +81,9 @@
               (map remote-event->local-event)
               (:recv-chan @websocket-client)
               (fn [error]
-                [:websocket-client-pipeliner/error {:error error}]))))
+                [:websocket-client-pipeliner/error
+                 {:error error}
+                 {:error? true}]))))
 
 ;; ---- spec ----
 

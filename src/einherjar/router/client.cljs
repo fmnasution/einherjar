@@ -50,4 +50,6 @@
                              (:location-chan @html-router)
                              false
                              (fn [error]
-                               [::error {:error error}]))))
+                               [:html-router/error
+                                {:error error}
+                                {:error? true}]))))

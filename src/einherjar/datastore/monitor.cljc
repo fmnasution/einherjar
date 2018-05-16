@@ -72,4 +72,6 @@
               (map tx-report->event)
               (:tx-report-chan @datastore-tx-monitor)
               (fn [error]
-                [:datastore-tx-pipeliner/error {:error error}]))))
+                [:datastore-tx-pipeliner/error
+                 {:error error}
+                 {:error? true}]))))

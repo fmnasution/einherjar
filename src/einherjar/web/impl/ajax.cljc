@@ -1,5 +1,6 @@
 (ns einherjar.web.impl.ajax
   (:require
+   [clojure.set :as set]
    [bidi.bidi :as router]
    [ajax.core :as ajax]
    [ajax.protocols]
@@ -17,7 +18,8 @@
                       :get    ajax/GET
                       :post   ajax/POST
                       :put    ajax/PUT
-                      :delete ajax/DELETE)]
+                      :delete ajax/DELETE)
+         option     (set/rename-keys option {:timeout-ms :timeout})]
      (request-fn uri option)))
   ([routes handler request-method option]
    (request! routes handler {} request-method option)))

@@ -5,9 +5,12 @@
    [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
-   #?@(:clj [[clojure.core.async :as async :refer [go-loop]]]
+   #?@(:clj [[clojure.core.async :as async :refer [go-loop]]
+             [einherjar.websocket.server :as ws.srv]]
        :cljs [[cljs.core.async :as async]
-              [einherjar.web.ajax.client :as wb.jx.clt]]))
+              [einherjar.web.ajax.client :as wb.jx.clt]
+              [einherjar.element.react :as el.rct]
+              [einherjar.websocket.client :as ws.clt]]))
   #?(:cljs
      (:require-macros
       [cljs.core.async.macros :refer [go-loop]])))
@@ -58,7 +61,10 @@
               @asnc.evt/event-dispatcher
               {:event-dispatcher     @asnc.evt/event-dispatcher
                :datastore-connection @dtst.conn/datastore-connection
-               #?@(:cljs [:server-ajax-caller @wb.jx.clt/server-ajax-caller])}))
+               #?@(:clj [:websocket-server @ws.srv/websocket-server]
+                   :cljs [:websocket-client   @ws.clt/websocket-client
+                          :server-ajax-caller @wb.jx.clt/server-ajax-caller
+                          :rum-element        @el.rct/rum-element])}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 
@@ -94,8 +100,8 @@
            (when-let [effects (event-consumer event)]
              (run! #(async/>! effect-chan %) effects))
            error
-           (async/>! event-chan [:event-consumer/error {:error error}])))
-        (recur)))
+           (async/>! event-chan [:event-consumer/error {:error error}]))
+          (recur))))
     (->EventConsumer stop-chan)))
 
 (defn- stop-event-consumer!
@@ -115,17 +121,3 @@
   (defmethod -event->effects id
     [datastore-database event]
     (handler datastore-database event)))
-
-;; ---- event handler ----
-
-(reg-event
- :default
- (fn [_ [id]]
-   (timbre/warn "Unknown event:" id)))
-
-;; ---- effect handler ----
-
-(reg-effect
- :default
- (fn [_ [id]]
-   (timbre/warn "Unknown effect:" id)))

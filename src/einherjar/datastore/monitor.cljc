@@ -3,7 +3,6 @@
    [mount.core :refer [defstate]]
    [datascript.core :as datascript]
    [taoensso.timbre :as timbre]
-   [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.protocols :as dtst.prt]
    [einherjar.datastore.connection :as dtst.conn]
@@ -15,16 +14,16 @@
 
 (defrecord DatastoreTxMonitor [tx-report-chan stopper])
 
-(encore/if-clj
- (defn- monitor-datomic-tx!
-   [conn tx-report-chan]
-   (let [active?_        (atom true)
-         tx-report-queue (datomic/tx-report-queue conn)]
-     (future
-       (while @active?_
-         (let [tx-report (.take tx-report-queue)]
-           (async/put! tx-report-chan tx-report))))
-     #(reset! active?_ false))))
+#?(:clj
+   (defn- monitor-datomic-tx!
+     [conn tx-report-chan]
+     (let [active?_        (atom true)
+           tx-report-queue (datomic/tx-report-queue conn)]
+       (future
+         (while @active?_
+           (let [tx-report (.take tx-report-queue)]
+             (async/put! tx-report-chan tx-report))))
+       #(reset! active?_ false))))
 
 (defn- monitor-datascript-tx!
   [conn tx-report-chan]
@@ -37,9 +36,8 @@
          conn    (dtst.prt/internal datastore-connection)
          stopper (case kind
                    :datomic
-                   (encore/if-clj
-                    (monitor-datomic-tx! conn tx-report-chan)
-                    nil)
+                   #?(:clj (monitor-datomic-tx! conn tx-report-chan)
+                      :cljs nil)
 
                    :datascript
                    (monitor-datascript-tx! conn tx-report-chan))]

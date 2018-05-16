@@ -14,3 +14,7 @@
              (->EventDispatcher (async/chan 100)))
   :stop  (do (timbre/info "Stopping event dispatcher...")
              (async/close! (:event-chan @event-dispatcher))))
+
+(defn dispatch!
+  [{:keys [event-chan] :as event-dispatcher} event]
+  (async/put! event-chan event))

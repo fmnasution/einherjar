@@ -25,7 +25,7 @@
 (defstate html-router
   :start (do (timbre/info "Starting html router...")
              (start-html-router! (rtr.rts/client-routes)
-                                 {:handler ::rtr.rts/index})))
+                                 {:handler ::default})))
 
 ;; ---- html router pipeliner ----
 
@@ -34,13 +34,19 @@
   (encore/assoc-when {:location/handler handler}
                      :location/route-params (not-empty route-params)))
 
+(defn- location->event
+  [location]
+  [:html-router/location location])
+
 (defstate html-router-pipeliner
   :start (do (timbre/info "Pipelining location"
                           "from html router"
                           "to event dispatcher...")
              (async/pipeline 1
                              (:event-chan @asnc.evt/event-dispatcher)
-                             (map bootstrap-location)
+                             (comp
+                              (map bootstrap-location)
+                              (map location->event))
                              (:location-chan @html-router)
                              false
                              (fn [error]

@@ -6,6 +6,7 @@
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
    [taoensso.sente :as sente]
    [taoensso.timbre :as timbre]
+   [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]))
 
 ;; ---- websocket server ----
@@ -50,6 +51,20 @@
   [handler websocket-server]
   (fn [request]
     (handler (assoc request ::websocket-server websocket-server))))
+
+(defn publish!
+  [{:keys [send! connected-uids] :as websocket-server}
+   {:keys [ws/?reply-fn ws/?reply-data event peer-id] :as option}]
+  (encore/cond!
+   (and (some? ?reply-fn) (some? ?reply-data))
+   (?reply-fn ?reply-data)
+
+   (and (some? event) (some? peer-id))
+   (send! peer-id event)
+
+   (some? event)
+   (let [peer-ids (:any @connected-uids)]
+     (run! #(send! % event) peer-ids))))
 
 ;; ---- websocket server pipeliner ----
 

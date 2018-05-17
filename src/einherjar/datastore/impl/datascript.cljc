@@ -17,7 +17,9 @@
   (q [{:keys [db]} query args]
     (apply datascript/q query db args))
   (entity [{:keys [db]} eid]
-    (datascript/entity db eid)))
+    (datascript/entity db eid))
+  (entid [{:keys [db]} ident]
+    (datascript/entid db ident)))
 
 ;; ---- datascript connection ----
 

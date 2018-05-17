@@ -6,7 +6,8 @@
 
 (defprotocol IDatastoreDatabase
   (q [this query args])
-  (entity [this eid]))
+  (entity [this eid])
+  (entid [this ident]))
 
 (defprotocol IDatastoreConnection
   (transact

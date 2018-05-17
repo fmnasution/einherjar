@@ -27,7 +27,9 @@
   (q [this query args]
     (dtst.prt/q (:db this) query args))
   (entity [this eid]
-    (dtst.prt/entity (:db this) eid)))
+    (dtst.prt/entity (:db this) eid))
+  (entid [this ident]
+    (dtst.prt/entid (:db this) ident)))
 
 (defn new-datastore-database
   [db]
@@ -77,6 +79,14 @@
   :stop  (do (timbre/info "Stopping datastore connection...")
              (stop-datastore-connection! @datastore-connection)))
 
+(defn kind
+  [datastore]
+  (dtst.prt/kind datastore))
+
+(defn internal
+  [datastore]
+  (dtst.prt/internal datastore))
+
 (defn transact
   ([datastore-connection tx-data tx-meta]
    (dtst.prt/transact datastore-connection tx-data tx-meta))
@@ -90,6 +100,23 @@
 (defn entity
   [datastore-database eid]
   (dtst.prt/entity datastore-database eid))
+
+(defn entid
+  [datastore-database ident]
+  (dtst.prt/entid datastore-database ident))
+
+(defn tempid
+  ([kind prtn n]
+   (case kind
+     :datomic    #?(:clj  (if (integer? n)
+                            (datomic/tempid prtn n)
+                            (datomic/tempid prtn))
+                    :cljs nil)
+     :datascript (if (integer? n)
+                   (datascript/tempid prtn n)
+                   (datascript/tempid prtn))))
+  ([kind prtn]
+   (tempid kind prtn nil)))
 
 ;; ---- spec ----
 

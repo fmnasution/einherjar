@@ -16,7 +16,9 @@
   (q [{:keys [db]} query args]
     (apply datomic/q query db args))
   (entity [{:keys [db]} eid]
-    (datomic/entity db eid)))
+    (datomic/entity db eid))
+  (entid [{:keys [db]} ident]
+    (datomic/entid db ident)))
 
 ;; ---- datomic connection ----
 

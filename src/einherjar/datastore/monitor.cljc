@@ -4,7 +4,6 @@
    [datascript.core :as datascript]
    [taoensso.timbre :as timbre]
    [einherjar.async.event :as asnc.evt]
-   [einherjar.datastore.protocols :as dtst.prt]
    [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj  [[clojure.core.async :as async]
               [datomic.api :as datomic]]
@@ -32,8 +31,8 @@
 
 (defn- start-datastore-tx-monitor!
   ([datastore-connection tx-report-chan]
-   (let [kind    (dtst.prt/kind datastore-connection)
-         conn    (dtst.prt/internal datastore-connection)
+   (let [kind    (dtst.conn/kind datastore-connection)
+         conn    (dtst.conn/internal datastore-connection)
          stopper (case kind
                    :datomic
                    #?(:clj  (monitor-datomic-tx! conn tx-report-chan)

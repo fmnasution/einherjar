@@ -6,8 +6,8 @@
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.protocols :as dtst.prt]
    [einherjar.datastore.connection :as dtst.conn]
-   #?@(:clj [[clojure.core.async :as async]
-             [datomic.api :as datomic]]
+   #?@(:clj  [[clojure.core.async :as async]
+              [datomic.api :as datomic]]
        :cljs [[cljs.core.async :as async]])))
 
 ;; ---- datastore tx monitor ----
@@ -36,7 +36,7 @@
          conn    (dtst.prt/internal datastore-connection)
          stopper (case kind
                    :datomic
-                   #?(:clj (monitor-datomic-tx! conn tx-report-chan)
+                   #?(:clj  (monitor-datomic-tx! conn tx-report-chan)
                       :cljs nil)
 
                    :datascript

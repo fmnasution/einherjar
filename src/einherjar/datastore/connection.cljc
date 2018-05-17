@@ -65,7 +65,7 @@
 (defn- stop-datastore-connection!
   [{:keys [conn] :as datastore-connection}]
   (when (= :datomic (dtst.prt/kind datastore-connection))
-    #?(:clj (dtst.ipl.dtm/release-datomic-connection! conn)
+    #?(:clj  (dtst.ipl.dtm/release-datomic-connection! conn)
        :cljs nil)))
 
 (defstate datastore-connection
@@ -86,6 +86,10 @@
 (defn db
   [datastore-connection]
   (dtst.prt/db datastore-connection))
+
+(defn entity
+  [datastore-database eid]
+  (dtst.prt/entity datastore-database eid))
 
 ;; ---- spec ----
 

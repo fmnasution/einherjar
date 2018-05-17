@@ -5,9 +5,9 @@
    [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
-   #?@(:clj [[clojure.core.async :as async :refer [go-loop]]
-             [einherjar.config.server :as cfg.srv]
-             [einherjar.websocket.server :as ws.srv]]
+   #?@(:clj  [[clojure.core.async :as async :refer [go-loop]]
+              [einherjar.config.server :as cfg.srv]
+              [einherjar.websocket.server :as ws.srv]]
        :cljs [[cljs.core.async :as async]
               [einherjar.config.client :as cfg.clt]
               [einherjar.web.ajax.client :as wb.jx.clt]
@@ -83,7 +83,7 @@
                :datastore-connection dtst.conn/datastore-connection
                :config               #?(:clj  cfg.srv/config
                                         :cljs cfg.clt/config)
-               #?@(:clj [:websocket-server ws.srv/websocket-server]
+               #?@(:clj  [:websocket-server ws.srv/websocket-server]
                    :cljs [:websocket-client   ws.clt/websocket-client
                           :server-ajax-caller wb.jx.clt/server-ajax-caller
                           :rum-element        el.rct/rum-element])}))
@@ -138,8 +138,7 @@
                            (every? not-error? effects)
                            effect-chan)]
           (doseq [effect effects]
-            (async/>! selected-chan effect))
-          #_(run! #(async/>! selected-chan %) effects))
+            (async/>! selected-chan effect)))
         (recur)))
     (->EventConsumer stop-chan)))
 

@@ -5,7 +5,7 @@
    [ajax.core :as ajax]
    [ajax.protocols]
    [taoensso.encore :as encore]
-   #?@(:clj [[clojure.spec.alpha :as spec]]
+   #?@(:clj  [[clojure.spec.alpha :as spec]]
        :cljs [[cljs.spec.alpha :as spec]])))
 
 ;; ---- server ajax caller ----

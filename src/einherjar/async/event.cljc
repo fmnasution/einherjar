@@ -2,7 +2,7 @@
   (:require
    [mount.core :refer [defstate]]
    [taoensso.timbre :as timbre]
-   #?@(:clj [[clojure.core.async :as async]]
+   #?@(:clj  [[clojure.core.async :as async]]
        :cljs [[cljs.core.async :as async]])))
 
 ;; ---- event dispatcher ----

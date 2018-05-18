@@ -61,6 +61,12 @@
 
 ;; ---- datastore tx pipeliner ----
 
+(defn- process-tx-report
+  [tx-report]
+  (-> tx-report
+      (update :db-after dtst.conn/create-datastore-database)
+      (update :db-before dtst.conn/create-datastore-database)))
+
 (defn- tx-report->event
   [tx-report]
   [:datastore-connection/tx-report tx-report])
@@ -72,7 +78,9 @@
              (async/pipeline
               1
               (:event-chan @asnc.evt/event-dispatcher)
-              (map tx-report->event)
+              (comp
+               (map process-tx-report)
+               (map tx-report->event))
               (:tx-report-chan @datastore-tx-monitor)
               (fn [error]
                 [:datastore-tx-pipeliner/error

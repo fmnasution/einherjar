@@ -21,7 +21,17 @@
   (entid [{:keys [db]} ident]
     (datascript/entid db ident)))
 
+(defn new-datascript-database
+  [db]
+  (->DatascriptDatabase db))
+
 ;; ---- datascript connection ----
+
+(defn- process-tx-report
+  [tx-report]
+  (-> tx-report
+      (update :db-after new-datascript-database)
+      (update :db-before new-datascript-database)))
 
 (defrecord DatascriptConnection [conn]
   dtst.prt/IDatastore
@@ -30,11 +40,13 @@
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
-    (datascript/transact conn tx-data))
+    (-> (datascript/transact conn tx-data)
+        (deref)
+        (process-tx-report)))
   (transact [this tx-data]
     (dtst.prt/transact this tx-data {}))
   (db [{:keys [conn]}]
-    (->DatascriptDatabase (datascript/db conn))))
+    (new-datascript-database (datascript/db conn))))
 
 (defn start-datascript-connection!
   [config]

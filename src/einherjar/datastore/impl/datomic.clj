@@ -20,7 +20,17 @@
   (entid [{:keys [db]} ident]
     (datomic/entid db ident)))
 
+(defn new-datomic-database
+  [db]
+  (->DatomicDatabase db))
+
 ;; ---- datomic connection ----
+
+(defn- process-tx-report
+  [tx-report]
+  (-> tx-report
+      (update :db-after new-datomic-database)
+      (update :db-before new-datomic-database)))
 
 (defrecord DatomicConnection [conn]
   dtst.prt/IDatastore
@@ -29,11 +39,13 @@
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
-    (datomic/transact conn tx-data))
+    (-> (datomic/transact conn tx-data)
+        (deref)
+        (process-tx-report)))
   (transact [this tx-data]
     (dtst.prt/transact this tx-data {}))
   (db [{:keys [conn]}]
-    (->DatomicDatabase (datomic/db conn))))
+    (new-datomic-database (datomic/db conn))))
 
 (defn start-datomic-connection!
   [config]

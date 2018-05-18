@@ -4,6 +4,7 @@
    [einherjar.async.effect]
    [einherjar.async.event]
    [einherjar.datastore.connection]
+   [einherjar.datastore.initial]
    [einherjar.datastore.monitor]
    [einherjar.async.handler]
    [einherjar.websocket.handler]

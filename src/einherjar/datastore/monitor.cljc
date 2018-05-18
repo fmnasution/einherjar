@@ -5,6 +5,7 @@
    [taoensso.timbre :as timbre]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
+   [einherjar.datastore.initial :as dtst.int]
    #?@(:clj  [[clojure.core.async :as async]
               [datomic.api :as datomic]]
        :cljs [[cljs.core.async :as async]])))
@@ -30,7 +31,7 @@
   #(datascript/unlisten! conn ::tx-report))
 
 (defn- start-datastore-tx-monitor!
-  ([datastore-connection tx-report-chan]
+  ([datastore-connection datastore-bootstrapper tx-report-chan]
    (let [kind    (dtst.conn/kind datastore-connection)
          conn    (dtst.conn/internal datastore-connection)
          stopper (case kind
@@ -41,8 +42,10 @@
                    :datascript
                    (monitor-datascript-tx! conn tx-report-chan))]
      (->DatastoreTxMonitor tx-report-chan stopper)))
-  ([datastore-connection]
-   (start-datastore-tx-monitor! datastore-connection (async/chan 100))))
+  ([datastore-connection datastore-bootstrapper]
+   (start-datastore-tx-monitor! datastore-connection
+                                datastore-bootstrapper
+                                (async/chan 100))))
 
 (defn- stop-datastore-tx-monitor!
   [{:keys [tx-report-chan stopper] :as datastore-tx-monitor}]
@@ -51,7 +54,8 @@
 
 (defstate datastore-tx-monitor
   :start (do (timbre/info "Monitoring tx on datastore connection...")
-             (start-datastore-tx-monitor! @dtst.conn/datastore-connection))
+             (start-datastore-tx-monitor! @dtst.conn/datastore-connection
+                                          @dtst.int/datastore-bootstrapper))
   :stop  (do (timbre/info "No longer monitors tx on datastore connection...")
              (stop-datastore-tx-monitor! @datastore-tx-monitor)))
 

@@ -12,6 +12,8 @@
                  [ring/ring-defaults "0.3.1"]
                  [metosin/muuntaja "0.5.0"]
                  [com.datomic/datomic-free "0.9.5697"]
+                 [datomic-schema "1.3.0"]
+                 [io.rkn/conformity "0.5.1"]
                  [com.cognitect/transit-clj "0.8.309"]
                  ;; ---- cljc ----
                  [org.clojure/core.async "0.4.474"]

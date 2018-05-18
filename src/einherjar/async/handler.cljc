@@ -1,7 +1,8 @@
 (ns einherjar.async.handler
   (:require
    [taoensso.timbre :as timbre]
-   [einherjar.async.effect :as asnc.efc]))
+   [einherjar.async.effect :as asnc.efc]
+   [einherjar.async.event :as asnc.evt]))
 
 ;; ---- event handler ----
 
@@ -38,6 +39,11 @@
  :default
  (fn [_ effect]
    [:effect-executor/unknown {:effect effect} {:error? true}]))
+
+(asnc.efc/reg-effect
+ :event-dispatcher/dispatch
+ (fn [{:keys [event-dispatcher]} [_ {:keys [event]}]]
+   (asnc.evt/dispatch! event-dispatcher event)))
 
 (asnc.efc/reg-effect
  :logger/info

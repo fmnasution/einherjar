@@ -39,7 +39,7 @@
   [{:keys [event-chan] :as event-dispatcher} services effect-chan]
   (let [stop-chan (async/chan)]
     (go-loop []
-      (encore/when-let [[effect chan]
+      (encore/when-let [[[effect-id :as effect] chan]
                         (async/alts! [effect-chan stop-chan] :priority true)
 
                         continue?
@@ -52,7 +52,8 @@
                            (execute-effect! services effect)
                            error
                            [:effect-executor/error
-                            {:error error}
+                            {:error error
+                             :data  {:id effect-id}}
                             {:error? true}])
 
                           error-happened?
@@ -118,7 +119,7 @@
   (let [stop-chan        (async/chan)
         event-to-effects (event->effects datastore-connection config)]
     (go-loop []
-      (encore/when-let [[event chan]
+      (encore/when-let [[[event-id :as event] chan]
                         (async/alts! [event-chan stop-chan] :priority true)
 
                         continue?
@@ -128,7 +129,8 @@
                            (event-to-effects event)
                            error
                            [[:event-consumer/error
-                             {:error error}
+                             {:error error
+                              :data  {:id event-id}}
                              {:error? true}]])
 
                           selected-chan

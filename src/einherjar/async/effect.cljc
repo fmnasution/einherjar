@@ -101,19 +101,22 @@
 (defmulti -event->effects dispatch-by-id)
 
 (defn- event->effects
-  [datastore-connection]
+  [datastore-connection config]
   (fn [event]
-    (let [datastore-database (dtst.conn/db datastore-connection)]
-      (not-empty (-event->effects datastore-database event)))))
+    (let [datastore-database (dtst.conn/db @datastore-connection)
+          services           {:config             @config
+                              :datastore-database datastore-database}]
+      (not-empty (-event->effects services event)))))
 
 (defrecord EventConsumer [stop-chan])
 
 (defn- start-event-consumer!
   [{:keys [event-chan] :as event-dispatcher}
    {:keys [effect-chan] :as effect-executor}
-   datastore-connection]
+   datastore-connection
+   config]
   (let [stop-chan        (async/chan)
-        event-to-effects (event->effects datastore-connection)]
+        event-to-effects (event->effects datastore-connection config)]
     (go-loop []
       (encore/when-let [[event chan]
                         (async/alts! [event-chan stop-chan] :priority true)
@@ -150,7 +153,9 @@
   :start (do (timbre/info "Starting event consumer...")
              (start-event-consumer! @asnc.evt/event-dispatcher
                                     @effect-executor
-                                    @dtst.conn/datastore-connection))
+                                    dtst.conn/datastore-connection
+                                    #?(:clj  cfg.srv/config
+                                       :cljs cfg.clt/config)))
   :stop  (do (timbre/info "Stopping event consumer...")
              (stop-event-consumer! @event-consumer)))
 

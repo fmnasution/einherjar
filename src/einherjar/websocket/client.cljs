@@ -49,7 +49,7 @@
     (let [[id data]      (if (sente/cb-success? reply-data)
                            event
                            error-event)
-          selected-event [id (assoc data :ws/?data reply-data)]]
+          selected-event [id (assoc data :websocket/?data reply-data)]]
       (asnc.evt/dispatch! event-dispatcher selected-event))))
 
 (defn- process-more
@@ -69,7 +69,7 @@
 (defn- remote-event->local-event
   [{:keys [event] :as remote-event}]
   (let [[id data] event]
-    [id {:ws/?data data}]))
+    [id {:websocket/?data data}]))
 
 (defstate websocket-client-pipeliner
   :start (do (timbre/info "Pipelining remote event"

@@ -41,7 +41,7 @@
              (async/close! (:recv-chan @websocket-server))))
 
 (defn ring-resource
-  [{:keys [ring-ajax-get ring-ajax-post] :as ws-server} request-method]
+  [{:keys [ring-ajax-get ring-ajax-post] :as websocket-server} request-method]
   (case request-method
     :get  ring-ajax-get
     :post ring-ajax-post
@@ -54,7 +54,8 @@
 
 (defn publish!
   [{:keys [send! connected-uids] :as websocket-server}
-   {:keys [ws/?reply-fn ws/?reply-data event peer-id] :as option}]
+   {:keys [websocket/?reply-fn websocket/?reply-data event peer-id]
+    :as   option}]
   (encore/cond!
    (and (some? ?reply-fn) (some? ?reply-data))
    (?reply-fn ?reply-data)
@@ -71,11 +72,11 @@
 (defn- remote-event->local-event
   [{:keys [id ?data ring-req uid client-id ?reply-fn]
     :as   remote-event}]
-  [id {:ws/?data        ?data
-       :ws/ring-request ring-req
-       :ws/peer-id      uid
-       :ws/device-id    client-id
-       :ws/?reply-fn    ?reply-fn}])
+  [id {:websocket/?data        ?data
+       :websocket/ring-request ring-req
+       :websocket/peer-id      uid
+       :websocket/device-id    client-id
+       :websocket/?reply-fn    ?reply-fn}])
 
 (defstate websocket-server-pipeliner
   :start (do (timbre/info "Pipelining remote event"

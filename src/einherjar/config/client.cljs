@@ -12,4 +12,5 @@
 (defstate config
   :start (do (timbre/info "Reading config...")
              {:datastore-connection {:kind :datascript}
-              :websocket-client     {:uri (websocket-server-uri)}}))
+              :websocket-client     {:uri        (websocket-server-uri)
+                                     :timeout-ms 10000}}))

@@ -2,8 +2,11 @@
   (:require
    [mount.core :refer [defstate]]
    [taoensso.timbre :as timbre]
-   #?@(:clj  [[clojure.core.async :as async]]
-       :cljs [[cljs.core.async :as async]])))
+   [taoensso.encore :as encore]
+   #?@(:clj  [[clojure.spec.alpha :as spec]
+              [clojure.core.async :as async]]
+       :cljs [[cljs.spec.alpha :as spec]
+              [cljs.core.async :as async]])))
 
 ;; ---- event dispatcher ----
 
@@ -17,4 +20,13 @@
 
 (defn dispatch!
   [{:keys [event-chan] :as event-dispatcher} event]
-  (async/put! event-chan event))
+  (->> event
+       (spec/assert ::command)
+       (async/put! event-chan)))
+
+;; ---- spec ----
+
+(spec/def ::command
+  (spec/and encore/vec2?
+            #(encore/qualified-keyword? (first %))
+            #(some? (second %))))

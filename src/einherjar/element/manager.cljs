@@ -16,11 +16,20 @@
                              (dtst.conn/db datastore))]
     (->Manager datastore-database event-dispatcher)))
 
+(defmulti -fetch-subscription-content
+  (fn [_ id _]
+    id))
+
 (defn subscribe
-  [{:keys [datastore-database] :as manager} id & args]
-  ;; TODO: implement this
-  )
+  [{:keys [datastore-database] :as manager} id option]
+  (-fetch-subscription-content datastore-database id option))
 
 (defn dispatch!
   [{:keys [event-dispatcher] :as manager} event]
   (asnc.evt/dispatch! event-dispatcher event))
+
+(defn reg-sub
+  [id sub-reader]
+  (defmethod -fetch-subscription-content id
+    [datastore-database id option]
+    (sub-reader datastore-database id option)))

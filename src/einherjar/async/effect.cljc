@@ -5,10 +5,12 @@
    [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
-   #?@(:clj  [[clojure.core.async :as async :refer [go-loop]]
+   #?@(:clj  [[clojure.spec.alpha :as spec]
+              [clojure.core.async :as async :refer [go-loop]]
               [einherjar.config.server :as cfg.srv]
               [einherjar.websocket.server :as ws.srv]]
-       :cljs [[cljs.core.async :as async]
+       :cljs [[cljs.spec.alpha :as spec]
+              [cljs.core.async :as async]
               [einherjar.config.client :as cfg.clt]
               [einherjar.web.ajax.client :as wb.jx.clt]
               [einherjar.element.react :as el.rct]
@@ -87,7 +89,7 @@
                #?@(:clj  [:websocket-server ws.srv/websocket-server]
                    :cljs [:websocket-client   ws.clt/websocket-client
                           :server-ajax-caller wb.jx.clt/server-ajax-caller
-                          :rum-element        el.rct/rum-element])}))
+                          :react-element      el.rct/react-element])}))
   :stop  (do (timbre/info "Stopping effect executor...")
              (stop-effect-executor! @effect-executor)))
 
@@ -101,6 +103,7 @@
 
 (defmulti -event->effects dispatch-by-id)
 
+;; TODO: inject triggering event to effects
 (defn- event->effects
   [datastore-connection config]
   (fn [event]
@@ -126,7 +129,9 @@
                         (and (not= stop-chan chan) (some? event))]
         (encore/when-let [effects
                           (encore/catching
-                           (event-to-effects event)
+                           (->> event
+                                (spec/assert ::generated-effects)
+                                (event-to-effects))
                            error
                            [[:event-consumer/error
                              {:error error
@@ -166,3 +171,8 @@
   (defmethod -event->effects id
     [datastore-database event]
     (handler datastore-database event)))
+
+;; ---- spec ----
+
+(spec/def ::generated-effects
+  (spec/nilable (spec/and (spec/coll-of ::asnc.evt/command) seq)))

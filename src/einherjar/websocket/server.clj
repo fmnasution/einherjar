@@ -1,5 +1,6 @@
 (ns einherjar.websocket.server
   (:require
+   [clojure.spec.alpha :as spec]
    [clojure.core.async :as async]
    [mount.core :refer [defstate]]
    [taoensso.sente.packers.transit :refer [get-transit-packer]]
@@ -56,6 +57,7 @@
   [{:keys [send! connected-uids] :as websocket-server}
    {:keys [websocket/?reply-fn websocket/?reply-data event peer-id]
     :as   option}]
+  (spec/assert ::publish-option option)
   (encore/cond!
    (and (some? ?reply-fn) (some? ?reply-data))
    (?reply-fn ?reply-data)
@@ -91,3 +93,31 @@
                 [:websocket-server-pipeliner/error
                  {:error error}
                  {:error? true}]))))
+
+;; ---- spec ----
+
+(spec/def :websocket/?reply-fn
+  fn?)
+
+(spec/def :websocket/?reply-data
+  (spec/and map? seq))
+
+(spec/def ::event
+  ::asnc.evt/command)
+
+(spec/def ::peer-id
+  encore/nblank-str?)
+
+(spec/def ::reply-option
+  (spec/keys :req [:websocket/?reply-fn :websocket/?data]))
+
+(spec/def ::send-option
+  (spec/keys :req-un [::event ::peer-id]))
+
+(spec/def ::broadcast-option
+  (spec/keys :req-un [::event]))
+
+(spec/def ::publish-option
+  (spec/or :reply     ::reply-option
+           :send      ::send-option
+           :broadcast ::broadcast-option))

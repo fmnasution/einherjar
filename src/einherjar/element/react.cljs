@@ -6,37 +6,33 @@
    [taoensso.timbre :as timbre]
    [einherjar.datastore.connection :as dtst.conn]
    [einherjar.async.event :as asnc.evt]
-   [einherjar.element.manager :as el.mng]))
+   [einherjar.element.manager :as el.mng]
+   [einherjar.element.dom.index :as el.dm.idx]))
 
 ;; ---- rum element ----
 
-(defc index
-  [manager]
-  [:div
-   [:h1 "Hello World!"]])
+(defrecord ReactElement [node react-el])
 
-(defrecord RumElement [node rum-el])
-
-(defn- mount-rum-element!
-  [manager rum-el el-id]
+(defn- mount-react-element!
+  [manager react-el el-id]
   (let [node (gdom/getRequiredElement el-id)]
-    (rum/mount (rum-el manager) node)
-    (->RumElement node rum-el)))
+    (rum/mount (react-el manager) node)
+    (->ReactElement node react-el)))
 
-(defn- unmount-rum-element!
-  [{:keys [node] :as rum-element}]
+(defn- unmount-react-element!
+  [{:keys [node] :as react-element}]
   (rum/unmount node))
 
-(defstate rum-element
-  :start (do (timbre/info "Mounting rum element...")
-             (mount-rum-element!
+(defstate react-element
+  :start (do (timbre/info "Mounting react element...")
+             (mount-react-element!
               (el.mng/new-manager @dtst.conn/datastore-connection
                                   @asnc.evt/event-dispatcher)
-              index
+              el.dm.idx/index
               "app"))
-  :stop  (do (timbre/info "Unmounting rum element...")
-             (unmount-rum-element! @rum-element)))
+  :stop  (do (timbre/info "Unmounting react element...")
+             (unmount-react-element! @react-element)))
 
 (defn remount!
-  [{:keys [node rum-el] :as rum-element} manager]
-  (rum/mount (rum-el manager) node))
+  [{:keys [node react-el] :as react-element} manager]
+  (rum/mount (react-el manager) node))

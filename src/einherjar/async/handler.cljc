@@ -34,11 +34,6 @@
  (fn [_ [_ data]]
    [[:logger/error data]]))
 
-(asnc.efc/reg-event
- :event-dispatcher/no-op
- (fn [_ _]
-   []))
-
 ;; ---- effect handler ----
 
 (asnc.efc/reg-effect

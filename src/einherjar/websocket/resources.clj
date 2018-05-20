@@ -15,7 +15,7 @@
     :let [resource (ws.srv/ring-resource websocket-server request-method)]
 
     (nil? resource)
-    (ring.response/service-unavailable)
+    (ring.response/method-not-allowed)
 
     :else (resource request)))
 

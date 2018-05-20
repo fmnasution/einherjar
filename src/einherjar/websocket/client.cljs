@@ -62,6 +62,7 @@
 (defn publish!
   [{:keys [send! event-dispatcher] :as websocket-client}
    {:keys [event more] :as option}]
+  (spec/assert ::publish-option option)
   (apply send! event (process-more event-dispatcher more)))
 
 ;; ---- websocket client pipeliner ----
@@ -92,3 +93,21 @@
 
 (spec/def ::websocket-client-config
   (spec/keys :req-un [::uri]))
+
+(spec/def ::event
+  ::asnc.evt/command)
+
+(spec/def ::send-option
+  (spec/keys :req-un [::event]))
+
+(spec/def ::more
+  (spec/tuple encore/pos-int?
+              ::asnc.evt/command
+              ::asnc.evt/command))
+
+(spec/def ::reply-option
+  (spec/keys :req-un [::event ::more]))
+
+(spec/def ::publish-option
+  (spec/or :reply ::reply-option
+           :send  ::send-option))

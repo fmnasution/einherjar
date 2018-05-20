@@ -146,3 +146,9 @@
 
 (spec/def ::datastore-connection-config
   (spec/keys :req-un [::kind]))
+
+(spec/def ::lookup-ref
+  (spec/tuple encore/qualified-keyword? some?))
+
+(spec/def ::real-eid
+  encore/pos-int?)

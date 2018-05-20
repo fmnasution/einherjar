@@ -51,7 +51,9 @@
 
                           result
                           (encore/catching
-                           (execute-effect! services effect)
+                           (->> effect
+                                (spec/assert ::asnc.evt/command)
+                                (execute-effect! services))
                            error
                            [:effect-executor/error
                             {:error error
@@ -130,6 +132,7 @@
         (encore/when-let [effects
                           (encore/catching
                            (->> event
+                                (spec/assert ::asnc.evt/command)
                                 (event-to-effects)
                                 (spec/assert ::generated-effects))
                            error

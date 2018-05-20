@@ -1,7 +1,9 @@
 (ns einherjar.datastore.sync
   (:require
    [taoensso.encore :as encore]
-   [einherjar.datastore.connection :as dtst.conn]))
+   [einherjar.datastore.connection :as dtst.conn]
+   #?@(:clj  [[clojure.spec.alpha :as spec]]
+       :cljs [[cljs.spec.alpha :as spec]])))
 
 (defn- ref-attr?
   [datastore-database attr]
@@ -36,16 +38,14 @@
 
 (defn- pos-int->lookup-ref
   [datastore-database eid]
-  (encore/when-let [correct? (encore/pos-int? eid)
+  (encore/when-let [correct? (spec/valid? ::dtst.conn/real-eid eid)
                     entity   (dtst.conn/entity datastore-database eid)]
     (or (find entity :db/ident)
         (find entity :db.entity/id))))
 
 (defn- lookup-ref->pos-int
   [datastore-database lookup-ref]
-  (encore/when-let [correct? (and (encore/vec2? lookup-ref)
-                                  (encore/qualified-keyword? (first lookup-ref))
-                                  (some? (second lookup-ref)))
+  (encore/when-let [correct? (spec/valid? ::dtst.conn/lookup-ref lookup-ref)
                     eid      (dtst.conn/entid datastore-database lookup-ref)]
     eid))
 

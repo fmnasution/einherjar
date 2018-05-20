@@ -11,5 +11,5 @@
                                                            :optimizations :none
                                                            :pretty-print  true}
                                             :figwheel     true}]
-                        :figwheel-options #profile {:dev {:server-port 9090}}
+                        :figwheel-options #profile {:dev {:server-port 8081}}
                         :build-ids        #profile {:dev ["dev"]}}}

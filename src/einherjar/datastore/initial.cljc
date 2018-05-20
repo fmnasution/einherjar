@@ -4,10 +4,14 @@
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
    [einherjar.datastore.connection :as dtst.conn]
+   [einherjar.user.initial :as usr.init]
+   [einherjar.role.initial :as rl.init]
    #?@(:clj  [[clojure.spec.alpha :as spec]
               [datomic-schema.schema :as datomic.schema :refer [schema fields]]
               [io.rkn.conformity :as datomic.conform]]
        :cljs [[cljs.spec.alpha :as spec]])))
+
+;; ---- bootstrap ----
 
 #?(:clj
    (defn- init-config->tx-data
@@ -28,20 +32,15 @@
       norm-map)))
 
 (defn- norm-map
-  [datastore-connection]
-  (case (dtst.conn/kind datastore-connection)
+  [kind]
+  (case kind
     :datomic
     #?(:clj  {::v1 {:txes [{:schemas
                             [(schema db.entity
                                (fields
                                 [id :string :unique-identity]
                                 [created-at :instant]
-                                [created-by :ref]))
-                             (schema user
-                               (fields
-                                [name :string]
-                                [password :string]
-                                [emails :string :many :unique-value]))]}]}}
+                                [created-by :ref]))]}]}}
        :cljs nil)
 
     :datascript
@@ -61,7 +60,10 @@
   :start (do (timbre/info "Bootstrappting datastore...")
              (bootstrap-datastore!
               @dtst.conn/datastore-connection
-              (norm-map @dtst.conn/datastore-connection))))
+              (let [kind (dtst.conn/kind @dtst.conn/datastore-connection)]
+                (encore/merge (norm-map kind)
+                              (usr.init/norm-map kind)
+                              (rl.init/norm-map kind))))))
 
 ;; ---- spec ----
 

@@ -109,7 +109,7 @@
   encore/nblank-str?)
 
 (spec/def ::reply-option
-  (spec/keys :req [:websocket/?reply-fn :websocket/?data]))
+  (spec/keys :req [:websocket/?reply-fn :websocket/?reply-data]))
 
 (spec/def ::send-option
   (spec/keys :req-un [::event ::peer-id]))

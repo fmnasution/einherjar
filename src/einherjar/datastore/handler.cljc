@@ -7,12 +7,12 @@
 
 (defn- should-sync?
   [{:keys [tx-meta] :as tx-report}]
-  (:datastore-connection/sync? tx-meta true))
+  (:datastore-connection/sync? (:tx-meta tx-report) true))
 
 (defn- mark-as-should-sync
   [tx-meta]
-  (assoc tx-meta :datastore-connection/sync? #?(:clj  true
-                                                :cljs false)))
+  (assoc tx-meta :datastore-connection/sync? #?(:clj  false
+                                                :cljs true)))
 
 (defn- bootstrap-schema?
   [{:keys [tx-meta] :as tx-report}]
@@ -35,10 +35,10 @@
    (encore/conj-when
     []
     (when (should-sync? tx-report)
-      [:event-dispatcher/dispatcher
+      [:event-dispatcher/dispatch
        {:event [:datastore-connection/sync-tx-report tx-report]}])
     (when (bootstrap-schema? tx-report)
-      [:event-dispatcher/dispatcher
+      [:event-dispatcher/dispatch
        {:event [:datastore-connection/request-data]}])
     #?(:cljs [:react-element/remount tx-report]))))
 

@@ -40,7 +40,7 @@
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
-    (-> (datascript/transact conn tx-data)
+    (-> (datascript/transact conn tx-data tx-meta)
         (deref)
         (process-tx-report)))
   (transact [this tx-data]

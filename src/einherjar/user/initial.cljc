@@ -14,7 +14,8 @@
                                (fields
                                 [name :string]
                                 [password :string]
-                                [emails :string :many :unique-value]))]}]}}
+                                [emails :string :many :unique-value]))]}]
+                    :requires [:einherjar.datastore.initial/v1]}}
        :cljs nil)
 
     :datascript

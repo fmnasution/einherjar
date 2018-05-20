@@ -13,7 +13,8 @@
                             [(schema role
                                (fields
                                 [name :string :unique-value]
-                                [members :ref :many]))]}]}}
+                                [members :ref :many]))]}]
+                    :requires [:einherjar.user.initial/v1]}}
        :cljs nil)
 
     :datascript

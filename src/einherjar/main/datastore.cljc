@@ -1,7 +1,11 @@
 (ns einherjar.main.datastore
+  (:require
+   [datascript.core :as datascript]
+   #?@(:clj  [[datomic-schema.schema :refer [schema fields]]]
+       :cljs [[goog.crypt.base64 :as base64]]))
   #?(:clj
-     (:require
-      [datomic-schema.schema :as datomic.schema :refer [schema fields]])))
+     (:import
+      [java.util Base64])))
 
 ;; ---- initial ----
 
@@ -19,3 +23,14 @@
 
     :datascript
     {}))
+
+;; ---- processor ----
+
+(defn- encode-base64
+  [input]
+  #?(:clj  (.encodeToString (Base64/getEncoder) (.getBytes input))
+     :cljs (base64/encodeString input)))
+
+(defn entity-id
+  []
+  (encode-base64 (str (datascript/squuid))))

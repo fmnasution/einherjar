@@ -1,7 +1,7 @@
 (ns einherjar.user.datastore
   #?(:clj
      (:require
-      [datomic-schema.schema :as datomic.schema :refer [schema fields]])))
+      [datomic-schema.schema :refer [schema fields]])))
 
 ;; ---- initial ----
 

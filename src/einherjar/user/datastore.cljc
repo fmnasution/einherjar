@@ -1,4 +1,4 @@
-(ns einherjar.user.initial
+(ns einherjar.user.datastore
   #?(:clj
      (:require
       [datomic-schema.schema :as datomic.schema :refer [schema fields]])))
@@ -15,7 +15,7 @@
                                 [name :string]
                                 [password :string]
                                 [emails :string :many :unique-value]))]}]
-                    :requires [:einherjar.datastore.initial/v1]}}
+                    :requires [:einherjar.main.initial/v1]}}
        :cljs nil)
 
     :datascript

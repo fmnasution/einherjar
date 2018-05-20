@@ -1,4 +1,4 @@
-(ns einherjar.role.initial
+(ns einherjar.main.datastore
   #?(:clj
      (:require
       [datomic-schema.schema :as datomic.schema :refer [schema fields]])))
@@ -10,11 +10,11 @@
   (case kind
     :datomic
     #?(:clj  {::v1 {:txes [{:schemas
-                            [(schema role
+                            [(schema db.entity
                                (fields
-                                [name :string :unique-value]
-                                [members :ref :many]))]}]
-                    :requires [:einherjar.user.initial/v1]}}
+                                [id :string :unique-identity]
+                                [created-at :instant]
+                                [created-by :ref]))]}]}}
        :cljs nil)
 
     :datascript

@@ -130,8 +130,8 @@
         (encore/when-let [effects
                           (encore/catching
                            (->> event
-                                (spec/assert ::generated-effects)
-                                (event-to-effects))
+                                (event-to-effects)
+                                (spec/assert ::generated-effects))
                            error
                            [[:event-consumer/error
                              {:error error
@@ -175,4 +175,4 @@
 ;; ---- spec ----
 
 (spec/def ::generated-effects
-  (spec/nilable (spec/and (spec/coll-of ::asnc.evt/command) seq)))
+  (spec/nilable (spec/coll-of ::asnc.evt/command)))

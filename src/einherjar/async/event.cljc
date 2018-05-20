@@ -27,6 +27,5 @@
 ;; ---- spec ----
 
 (spec/def ::command
-  (spec/and encore/vec2?
-            #(encore/qualified-keyword? (first %))
-            #(some? (second %))))
+  (spec/and vector?
+            #(encore/qualified-keyword? (first %))))

@@ -27,5 +27,5 @@
 ;; ---- spec ----
 
 (spec/def ::command
-  (spec/and vector?
-            #(encore/qualified-keyword? (first %))))
+  (spec/nilable (spec/cat :command-id encore/qualified-keyword?
+                          :option     (spec/* map?))))

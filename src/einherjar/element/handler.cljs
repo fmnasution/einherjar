@@ -8,9 +8,9 @@
 ;; ---- effect handler ----
 
 (asnc.efc/reg-effect
- :rum-element/remount
- (fn [{:keys [rum-element event-dispatcher]} [_ {:keys [db-after]}]]
+ :react-element/remount
+ (fn [{:keys [react-element event-dispatcher]} [_ {:keys [db-after]}]]
    (let [manager (el.mng/new-manager
                   (dtst.conn/new-datastore-database db-after)
                   event-dispatcher)]
-     (el.rct/remount! rum-element manager))))
+     (el.rct/remount! react-element manager))))

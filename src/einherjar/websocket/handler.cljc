@@ -40,12 +40,17 @@
       (encore/conj-when
        []
        (when (real-first-time-opened? old-state new-state)
-         (let [event [:datastore-connection/request-schema]]
-           [:event-dispatcher/dispatch {:event event}]))
-       #_(when (first-time-opened? old-state new-state)
-           (let [event [#?(:clj  :websocket-server/request-myself
-                           :cljs :websocket-client/request-myself)]]
-             [:event-dispatcher/dispatch {:event event}]))))))
+         [:event-dispatcher/dispatch
+          {:event [:datastore-connection/request-schema]}])
+       (when (first-time-opened? old-state new-state)
+         [:event-dispatcher/dispatch
+          {:event [:websocket-client/request-myself]}])))))
+
+#?(:cljs
+   (asnc.efc/reg-event
+    :websocket-client/error
+    (fn [_ [_ data]]
+      (println data))))
 
 ;; ---- effect handler ----
 

@@ -15,8 +15,7 @@
               [einherjar.web.server]
               [einherjar.router.server]
               [einherjar.websocket.server]]
-       :cljs [[cljs.spec.alpha :as spec]
-              [einherjar.config.client]
+       :cljs [[einherjar.config.client]
               [einherjar.element.react]
               [einherjar.router.client]
               [einherjar.websocket.client]
@@ -30,6 +29,3 @@
 
 #?(:cljs
    (mount/start))
-
-#?(:cljs
-   (spec/check-asserts true))

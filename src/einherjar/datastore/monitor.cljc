@@ -2,10 +2,11 @@
   (:require
    [mount.core :refer [defstate]]
    [datascript.core :as datascript]
+   [datascript-schema.core :as datascript.schema]
    [taoensso.timbre :as timbre]
    [einherjar.async.event :as asnc.evt]
    [einherjar.datastore.connection :as dtst.conn]
-   [einherjar.datastore.initial :as dtst.int]
+   [einherjar.datastore.initial :as dtst.init]
    #?@(:clj  [[clojure.core.async :as async]
               [datomic.api :as datomic]]
        :cljs [[cljs.core.async :as async]])))
@@ -27,8 +28,9 @@
 
 (defn- monitor-datascript-tx!
   [conn tx-report-chan]
-  (datascript/listen! conn ::tx-report #(async/put! tx-report-chan %))
-  #(datascript/unlisten! conn ::tx-report))
+  (let [handler #(async/put! tx-report-chan %)]
+    (datascript.schema/listen-on-schema-change! conn handler)
+    #(datascript.schema/unlisten-schema-change! conn)))
 
 (defn- start-datastore-tx-monitor!
   ([datastore-connection datastore-bootstrapper tx-report-chan]
@@ -55,7 +57,7 @@
 (defstate datastore-tx-monitor
   :start (do (timbre/info "Monitoring tx on datastore connection...")
              (start-datastore-tx-monitor! @dtst.conn/datastore-connection
-                                          @dtst.int/datastore-bootstrapper))
+                                          @dtst.init/datastore-bootstrapper))
   :stop  (do (timbre/info "No longer monitors tx on datastore connection...")
              (stop-datastore-tx-monitor! @datastore-tx-monitor)))
 

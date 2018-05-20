@@ -22,6 +22,7 @@
                  [rum "0.11.2"]
                  [cljs-ajax "0.7.3"]
                  [datascript "0.16.5"]
+                 [datascript-schema "0.2.1"]
                  [com.taoensso/sente "1.12.0"]
                  [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.96.0"]

@@ -14,6 +14,7 @@
                  [com.datomic/datomic-free "0.9.5697"]
                  [datomic-schema "1.3.0"]
                  [io.rkn/conformity "0.5.1"]
+                 [buddy/buddy-hashers "1.3.0"]
                  [com.cognitect/transit-clj "0.8.309"]
                  ;; ---- cljc ----
                  [org.clojure/core.async "0.4.474"]

@@ -9,12 +9,12 @@
   [kind]
   (case kind
     :datomic
-    #?(:clj  {::v1 {:txes [{:schemas
-                            [(schema role
-                               (fields
-                                [name :string :unique-value]
-                                [members :ref :many]))]}]
-                    :requires [:einherjar.user.initial/v1]}}
+    #?(:clj  {::v1 {:txes     [{:schemas
+                                [(schema role
+                                   (fields
+                                    [name :string :unique-value]
+                                    [members :ref :many]))]}]
+                    :requires [:einherjar.user.datastore/v1]}}
        :cljs nil)
 
     :datascript

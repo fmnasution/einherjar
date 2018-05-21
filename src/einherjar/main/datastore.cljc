@@ -1,6 +1,8 @@
 (ns einherjar.main.datastore
   (:require
+   [taoensso.encore :as encore]
    [datascript.core :as datascript]
+   [einherjar.datastore.connection :as dtst.conn]
    #?@(:clj  [[datomic-schema.schema :refer [schema fields]]]
        :cljs [[goog.crypt.base64 :as base64]]))
   #?(:clj
@@ -34,3 +36,29 @@
 (defn entity-id
   []
   (encode-base64 (str (datascript/squuid))))
+
+(defn tempid
+  ([kind prtn n]
+   (dtst.conn/tempid kind prtn n))
+  ([kind prtn]
+   (dtst.conn/tempid kind prtn)))
+
+(defn- -assoc-nx-eid-id
+  [m temp-eid entity-id]
+  (encore/assoc-nx m
+                   :db/id        temp-eid
+                   :db.entity/id entity-id))
+
+(defn assoc-nx-eid-id
+  ([m kind prtn n]
+   (-assoc-nx-eid-id m (tempid kind prtn n) (entity-id)))
+  ([m kind prtn]
+   (-assoc-nx-eid-id m (tempid kind prtn) (entity-id))))
+
+(defmulti update-data
+  (fn [[db-fn eid attr value]]
+    [db-fn attr]))
+
+(defmethod update-data :default
+  [data]
+  data)

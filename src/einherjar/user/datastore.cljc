@@ -26,7 +26,7 @@
                                   (mn.dtst/assoc-nx-eid-id <> kind :db.part/user)
                                   (user->tx-data <>)
                                   (into []
-                                        (map #(mn.dtst/update-data kind %))
+                                        (mn.dtst/xupdate-tx-data kind)
                                         <>))}]
                     :requires [:einherjar.main.datastore/v1]}}
        :cljs nil)

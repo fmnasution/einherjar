@@ -62,3 +62,7 @@
 (defmethod update-data :default
   [kind data]
   data)
+
+(defn xupdate-tx-data
+  [kind]
+  (map #(update-data kind %)))

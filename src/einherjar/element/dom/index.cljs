@@ -41,6 +41,7 @@
   [manager]
   (if-let [schemas (not-empty (el.mng/subscribe manager ::all-schema {}))]
     [:div
+     [:h1 "All Schema:"]
      [:ul
       (for [schema schemas
             :let [eid (:db/id schema)]]
@@ -53,6 +54,7 @@
   [manager]
   (if-let [datas (not-empty (el.mng/subscribe manager ::all-data {}))]
     [:div
+     [:h1 "All Data:"]
      [:ul
       (for [data datas
             :let [ident (:db.entity/id data)]]
@@ -66,6 +68,4 @@
   [:div
    [:h1 "Hello World!"]
    (display-all-schema manager)
-   (display-all-data manager)
-   (display-map {:user/name "faris"
-                 :user/email "foobar@foo.bar"})])
+   (display-all-data manager)])

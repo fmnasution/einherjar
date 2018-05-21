@@ -33,7 +33,9 @@
   :source-paths ["src/"]
   :resource-paths ["resources/"]
   :profiles {:dev {:clean-targets ^{:protect false}
-                   [:target-path "resources/public/einherjar"]
+                   [:target-path
+                    "resources/public/einherjar/app.js"
+                    "resources/public/einherjar/out"]
                    :source-paths ["env/dev/"]
                    :dependencies [[cider/nrepl "0.3.0"]
                                   [cider/piggieback "0.3.2"]

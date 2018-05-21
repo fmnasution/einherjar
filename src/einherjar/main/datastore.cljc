@@ -56,9 +56,9 @@
    (-assoc-nx-eid-id m (tempid kind prtn) (entity-id))))
 
 (defmulti update-data
-  (fn [[db-fn eid attr value]]
+  (fn [kind [db-fn eid attr value]]
     [db-fn attr]))
 
 (defmethod update-data :default
-  [data]
+  [kind data]
   data)

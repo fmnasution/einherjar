@@ -3,7 +3,8 @@
    [taoensso.encore :as encore]
    [einherjar.async.effect :as asnc.efc]
    [einherjar.datastore.connection :as dtst.conn]
-   [einherjar.datastore.sync :as dtst.snc]))
+   [einherjar.datastore.sync :as dtst.snc]
+   [einherjar.main.datastore :as mn.dtst]))
 
 (defn- should-sync?
   [{:keys [tx-meta] :as tx-report}]
@@ -123,6 +124,10 @@
 (asnc.efc/reg-effect
  :datastore-connection/transact
  (fn [{:keys [datastore-connection]} [_ {:keys [tx-data tx-meta]}]]
-   (if (map? tx-meta)
-     (dtst.conn/transact datastore-connection tx-data tx-meta)
-     (dtst.conn/transact datastore-connection tx-data))))
+   (let [kind    (dtst.conn/kind datastore-connection)
+         tx-data (into []
+                       (map #(mn.dtst/update-data kind %))
+                       tx-data)]
+     (if (map? tx-meta)
+       (dtst.conn/transact datastore-connection tx-data tx-meta)
+       (dtst.conn/transact datastore-connection tx-data)))))

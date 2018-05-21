@@ -25,7 +25,9 @@
                                        :user/emails   ["admin@einherjar.io"]} <>
                                   (mn.dtst/assoc-nx-eid-id <> kind :db.part/user)
                                   (user->tx-data <>)
-                                  (into [] (map mn.dtst/update-data) <>))}]
+                                  (into []
+                                        (map #(mn.dtst/update-data kind %))
+                                        <>))}]
                     :requires [:einherjar.main.datastore/v1]}}
        :cljs nil)
 
@@ -53,5 +55,5 @@
 
 #?(:clj
    (defmethod mn.dtst/update-data [:db/add :user/password]
-     [[db-fn eid attr value]]
+     [kind [db-fn eid attr value]]
      [db-fn eid attr (buddy.hash/derive value)]))

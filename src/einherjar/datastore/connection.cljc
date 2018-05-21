@@ -151,4 +151,7 @@
   (spec/tuple encore/qualified-keyword? some?))
 
 (spec/def ::real-eid
-  encore/pos-int?)
+  encore/nneg-int?)
+
+(spec/def ::datascript-temp-eid
+  encore/neg-int?)

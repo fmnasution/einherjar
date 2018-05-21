@@ -117,7 +117,7 @@
       ([container]
        (rf (reduce rf container @old-datas_)))
       ([container [_ eid :as data]]
-       (if (encore/neg-int? eid)
+       (if (spec/valid? ::dtst.conn/datascript-temp-eid eid)
          (rf container data)
          (do (vswap! old-datas_ conj data)
              container))))))
@@ -162,14 +162,14 @@
                    (new-datoms eid attr value nil true)))
          (dissoc m :db/id)))
   ([m]
-   (let [eid (encore/have (:db/id m))]
+   (let [eid (spec/assert ::dtst.conn/real-eid (:db/id m))]
      (map->datoms m eid))))
 
 (defn- new-datoms
   [eid attr value date added?]
   (encore/cond
     (map? value)
-    (let [sub-eid (encore/have (:db/id value))]
+    (let [sub-eid (spec/assert ::dtst.conn/real-eid (:db/id value))]
       (conj (map->datoms value sub-eid)
             [eid attr sub-eid date added?]))
 

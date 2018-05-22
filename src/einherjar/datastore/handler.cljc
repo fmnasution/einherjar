@@ -6,22 +6,23 @@
    [einherjar.datastore.sync :as dtst.snc]
    [einherjar.main.datastore :as mn.dtst]))
 
+;; ---- tx meta ----
+
 (defn- should-sync?
   [{:keys [tx-meta] :as tx-report}]
   (:datastore-connection/sync? (:tx-meta tx-report) true))
 
-(defn- mark-as-should-sync
-  [tx-meta]
-  (assoc tx-meta :datastore-connection/sync? #?(:clj  false
-                                                :cljs true)))
+(defn- should-sync
+  [tx-meta sync?]
+  (assoc tx-meta :datastore-connection/sync? sync?))
 
 (defn- bootstrap-schema?
   [{:keys [tx-meta] :as tx-report}]
   (:datastore-connection/bootstrap-schema? tx-meta false))
 
-(defn- mark-as-bootstrap-schema
-  [tx-meta]
-  (assoc tx-meta :datastore-connection/bootstrap-schema? true))
+(defn- bootstrap-schema
+  [tx-meta bootstrap?]
+  (assoc tx-meta :datastore-connection/bootstrap-schema? bootstrap?))
 
 ;; ---- event handler ----
 
@@ -61,7 +62,8 @@
    (let [tx-data (into []
                        (dtst.snc/xdatoms->remote-tx db-before db-after)
                        tx-data)
-         tx-meta (mark-as-should-sync tx-meta)
+         tx-meta (should-sync tx-meta #?(:clj  false
+                                         :cljs true))
          event   [:datastore-connection/incoming-remote-tx {:tx-data tx-data
                                                             :tx-meta tx-meta}]]
      [[#?(:clj  :websocket-server/publish
@@ -97,8 +99,8 @@
                           (dtst.snc/xpulled-data->remote-tx datastore-database)
                           (dtst.snc/pull-all-schema datastore-database))
             tx-meta (-> {}
-                        (mark-as-should-sync)
-                        (mark-as-bootstrap-schema))]
+                        (should-sync false)
+                        (bootstrap-schema true))]
         [[:websocket-server/publish
           {:websocket/?reply-fn   ?reply-fn
            :websocket/?reply-data {:tx-data tx-data
@@ -111,9 +113,7 @@
       (let [tx-data (into []
                           (dtst.snc/xpulled-data->remote-tx datastore-database)
                           (dtst.snc/pull-all-data datastore-database))
-            tx-meta (-> {}
-                        (mark-as-should-sync)
-                        (mark-as-bootstrap-schema))]
+            tx-meta (should-sync {} false)]
         [[:websocket-server/publish
           {:websocket/?reply-fn   ?reply-fn
            :websocket/?reply-data {:tx-data tx-data

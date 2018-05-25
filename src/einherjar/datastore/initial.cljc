@@ -1,6 +1,7 @@
 (ns einherjar.datastore.initial
   (:require
    [mount.core :refer [defstate]]
+   [com.rpl.specter :as specter :include-macros true]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
    [einherjar.datastore.connection :as dtst.conn]
@@ -25,12 +26,9 @@
 #?(:clj
    (defn- process-norm-map
      [norm-map]
-     (encore/map-vals
-      (fn [conformable]
-        (if (contains? conformable :txes)
-          (update conformable :txes #(into [] (map init-config->tx-data) %))
-          conformable))
-      norm-map)))
+     (specter/transform [specter/MAP-VALS (specter/must :txes)]
+                        #(into [] (map init-config->tx-data) %)
+                        norm-map)))
 
 (defn- bootstrap-datastore!
   [datastore-connection norm-map]
@@ -60,7 +58,7 @@
   (spec/cat :datas (spec/+ (spec/or :map-form map? :vector-form vector?))))
 
 (spec/def ::init-config
-  (spec/cat :init-config (spec/+ (spec/keys :opt-un [::schemas ::datas]))))
+  (spec/and (spec/keys :opt-un [::schemas ::datas]) seq))
 
 (spec/def ::txes
   (spec/coll-of ::init-config))

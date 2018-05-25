@@ -7,7 +7,7 @@
 
 ;; ---- form ----
 
-(def ^:private LEAF-PATH
+(def ^:private LEAF
   (specter/recursive-path []
                           p
                           [(specter/cond-path
@@ -22,16 +22,17 @@
 
 (defn- generate-touched
   [data check-touched?]
-  (specter/setval LEAF-PATH check-touched? data))
+  (specter/setval [LEAF] check-touched? data))
 
 (defn- generate-error
   [data]
-  (specter/setval LEAF-PATH "" data))
+  (specter/setval [LEAF] "" data))
 
 (defn- validation->validator
-  [entries]
+  [validation]
   (fn [v]
-    (let [result (->> entries
+    (let [result (->> validation
+                      (spec/assert ::validation)
                       (map (fn [[x y]]
                              (let [validate-fn (encore/cond!
                                                 (keyword? x)
@@ -39,6 +40,7 @@
 
                                                 (fn? x)
                                                 x)
+
                                    ok? (validate-fn v)]
                                (when-not ok?
                                  (let [message-fn (encore/cond!
@@ -54,18 +56,19 @@
         result
         ""))))
 
+(def ^:private MAP-LEAF
+  (specter/recursive-path []
+                          p
+                          [(specter/cond-path
+                            map?
+                            [specter/MAP-VALS p]
+
+                            any?
+                            [specter/STAY])]))
+
 (defn- generate-validator
   [data]
-  (specter/transform [(specter/recursive-path []
-                                              p
-                                              [(specter/cond-path
-                                                map?
-                                                [specter/MAP-VALS p]
-
-                                                any?
-                                                specter/STAY)])]
-                     validation->validator
-                     data))
+  (specter/transform [MAP-LEAF] validation->validator data))
 
 (defn form
   [{:keys [fields validator initial check-touched? on-submit]
@@ -88,10 +91,23 @@
                        (add-watch data_ ::form-data watch-fn)
                        (add-watch error_ ::form-error watch-fn)
                        (add-watch touched_ ::form-touched watch-fn)
-                       (assoc state
-                              ::form {:update-data    (new-updater-fn data_)
-                                      :update-touched (new-updater-fn touched_)
-                                      :update-error   (new-updater-fn error_)})))
+                       (let [touched-updater (new-updater-fn touched_)
+                             form-option     {:update-data
+                                              (new-updater-fn data_)
+
+                                              :update-touched
+                                              (fn [& args]
+                                                (touched-updater
+                                                 assoc
+                                                 ::first?
+                                                 false)
+                                                (apply
+                                                 touched-updater
+                                                 args))
+
+                                              :update-error
+                                              (new-updater-fn error_)}]
+                         (assoc state ::form form-option))))
      :will-unmount (fn [state]
                      (remove-watch data_ ::form-data)
                      (remove-watch error_ ::form-error)
@@ -111,3 +127,12 @@
                                     :error     @error_}
                              state (update state ::form encore/merge data)]
                          (render-fn state))))}))
+
+;; ---- spec ----
+
+(spec/def ::validation
+  (spec/cat :validation
+            (spec/+ (spec/tuple (spec/or :spec encore/qualified-keyword?
+                                         :pred fn?)
+                                (spec/or :message     encore/nblank-str?
+                                         :constructor fn?)))))

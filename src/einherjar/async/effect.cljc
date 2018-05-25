@@ -1,6 +1,7 @@
 (ns einherjar.async.effect
   (:require
    [mount.core :refer [defstate]]
+   [com.rpl.specter :as specter :include-macros true]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
    [einherjar.async.event :as asnc.evt]
@@ -47,7 +48,7 @@
                         continue?
                         (and (not= stop-chan chan) (some? effect))]
         (encore/when-let [services
-                          (encore/map-vals deref services)
+                          (specter/transform [specter/MAP-VALS] deref services)
 
                           result
                           (encore/catching

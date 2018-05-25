@@ -1,5 +1,6 @@
 (ns einherjar.datastore.impl.datomic
   (:require
+   [com.rpl.specter :as specter]
    [clojure.spec.alpha :as spec]
    [datomic.api :as datomic]
    [taoensso.encore :as encore]
@@ -28,9 +29,11 @@
 
 (defn- process-tx-report
   [tx-report]
-  (-> tx-report
-      (update :db-after new-datomic-database)
-      (update :db-before new-datomic-database)))
+  (specter/multi-transform
+   [(specter/multi-path
+     [:db-after (specter/terminal new-datomic-database)]
+     [:db-before (specter/terminal new-datomic-database)])]
+   tx-report))
 
 (defrecord DatomicConnection [conn]
   dtst.prt/IDatastore

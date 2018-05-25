@@ -55,7 +55,6 @@
                                     (let [error (current-validator
                                                  current-value)]
                                       (update-touched assoc k true)
-                                      (update-touched assoc :first? false)
                                       (update-error assoc k error)))
                    :on-change     (fn [e]
                                     (let [value (-> e .-target .-value)]
@@ -64,7 +63,6 @@
                                        (let [error (current-validator value)]
                                          (update-error assoc k error)))))
                    :on-focus      #(encore/do-nil
-                                    (update-touched assoc k true)
                                     (update-touched assoc :first? false))))
            k)])
       [:div

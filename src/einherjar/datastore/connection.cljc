@@ -1,6 +1,7 @@
 (ns einherjar.datastore.connection
   (:require
    [mount.core :refer [defstate]]
+   [com.rpl.specter :as specter :include-macros true]
    [datascript.core :as datascript]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
@@ -50,9 +51,11 @@
 
 (defn- process-tx-report
   [tx-report]
-  (-> tx-report
-      (update :db-after new-datastore-database)
-      (update :db-before new-datastore-database)))
+  (specter/multi-transform
+   [(specter/multi-path
+     [:db-after (specter/terminal new-datastore-database)]
+     [:db-before (specter/terminal new-datastore-database)])]
+   tx-report))
 
 (defrecord DatastoreConnection [conn]
   dtst.prt/IDatastore

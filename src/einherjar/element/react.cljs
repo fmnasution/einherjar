@@ -28,7 +28,7 @@
              (mount-react-element!
               (el.mng/new-manager @dtst.conn/datastore-connection
                                   @asnc.evt/event-dispatcher)
-              el.dm.idx/index
+              el.dm.idx/<index>
               "app"))
   :stop  (do (timbre/info "Unmounting react element...")
              (unmount-react-element! @react-element)))

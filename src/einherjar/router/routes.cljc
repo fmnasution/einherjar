@@ -2,7 +2,9 @@
 
 (defn server-routes
   []
-  ["" {"/chsk"             ::websocket
+  ["" {"/login"            ::login
+       "/logout"           ::logout
+       "/chsk"             ::websocket
        "/resources/public" {true ::asset}
        "/"                 ::index}])
 

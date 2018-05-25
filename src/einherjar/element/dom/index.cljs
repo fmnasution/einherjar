@@ -1,8 +1,11 @@
 (ns einherjar.element.dom.index
   (:require
    [rum.core :refer [defc]]
+   [cljs-react-material-ui.core :as mui]
+   [cljs-react-material-ui.rum :as rum.mui]
    [einherjar.element.manager :as el.mng]
-   [einherjar.datastore.connection :as dtst.conn]))
+   [einherjar.datastore.connection :as dtst.conn]
+   [einherjar.user.dom :as usr.dm]))
 
 ;; ---- sub ----
 
@@ -28,7 +31,7 @@
 
 ;; ---- dom ----
 
-(defc display-map
+(defc <display-map>
   [m]
   [:div
    [:ul
@@ -37,7 +40,7 @@
       [:li {:key str-k}
        [:p (str str-k " == " v)]])]])
 
-(defc display-all-schema
+(defc <display-all-schema>
   [manager]
   (if-let [schemas (not-empty (el.mng/subscribe manager ::all-schema {}))]
     [:div
@@ -46,11 +49,11 @@
       (for [schema schemas
             :let [eid (:db/id schema)]]
         [:li {:key eid}
-         (display-map schema)])]]
+         (<display-map> schema)])]]
     [:div
      [:h1 "No schemas to be displayed!"]]))
 
-(defc display-all-data
+(defc <display-all-data>
   [manager]
   (if-let [datas (not-empty (el.mng/subscribe manager ::all-data {}))]
     [:div
@@ -59,13 +62,16 @@
       (for [data datas
             :let [ident (:db.entity/id data)]]
         [:li {:key ident}
-         (display-map data)])]]
+         (<display-map> data)])]]
     [:div
      [:h1 "No datas to be displayed!"]]))
 
-(defc index
+(defc <index>
   [manager]
-  [:div
-   [:h1 "Hello World!"]
-   (display-all-schema manager)
-   (display-all-data manager)])
+  (rum.mui/mui-theme-provider
+   {:mui-theme (mui/get-mui-theme)}
+   [:div
+    [:h1 "Hello World!"]
+    (<display-all-schema> manager)
+    (<display-all-data> manager)
+    (usr.dm/<login-form> manager)]))

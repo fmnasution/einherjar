@@ -54,13 +54,13 @@
 ;; ---- spec ----
 
 (spec/def ::schemas
-  (spec/and (spec/coll-of map?) seq))
+  (spec/cat :schemas (spec/+ map?)))
 
 (spec/def ::datas
-  (spec/and (spec/coll-of (spec/or :map-form map? :vector-form vector?)) seq))
+  (spec/cat :datas (spec/+ (spec/or :map-form map? :vector-form vector?))))
 
 (spec/def ::init-config
-  (spec/and (spec/keys :opt-un [::schemas ::datas]) seq))
+  (spec/cat :init-config (spec/+ (spec/keys :opt-un [::schemas ::datas]))))
 
 (spec/def ::txes
   (spec/coll-of ::init-config))
@@ -69,7 +69,7 @@
   encore/qualified-symbol?)
 
 (spec/def ::requires
-  (spec/and (spec/coll-of keyword?) seq))
+  (spec/cat :keywords (spec/+ encore/qualified-keyword?)))
 
 (spec/def ::norm
   (spec/and (spec/keys :opt-un [::txes ::txes-fn ::requires])

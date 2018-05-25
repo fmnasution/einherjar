@@ -18,4 +18,3 @@
     (ring.response/method-not-allowed)
 
     :else (resource request)))
-

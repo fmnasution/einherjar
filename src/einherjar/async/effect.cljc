@@ -42,7 +42,7 @@
   [{:keys [event-chan] :as event-dispatcher} services effect-chan]
   (let [stop-chan (async/chan)]
     (go-loop []
-      (encore/when-let [[[effect-id :as effect] chan]
+      (encore/when-let [[[effect-id _ effect-meta :as effect] chan]
                         (async/alts! [effect-chan stop-chan] :priority true)
 
                         continue?
@@ -58,7 +58,7 @@
                            error
                            [:effect-executor/error
                             {:error error
-                             :data  {:id effect-id}}
+                             :data  (assoc effect-meta :id effect-id)}
                             {:error? true}])
 
                           error-happened?
@@ -106,14 +106,18 @@
 
 (defmulti -event->effects dispatch-by-id)
 
-;; TODO: inject triggering event to effects
 (defn- event->effects
   [datastore-connection config]
-  (fn [event]
+  (fn [[event-id :as event]]
     (let [datastore-database (dtst.conn/db @datastore-connection)
           services           {:config             @config
                               :datastore-database datastore-database}]
-      (not-empty (-event->effects services event)))))
+      (some->> (-event->effects services event)
+               (not-empty)
+               (into [] (map (fn [[effect-id effect-data effect-meta]]
+                               [effect-id
+                                effect-data
+                                (assoc effect-meta :from event-id)])))))))
 
 (defrecord EventConsumer [stop-chan])
 
@@ -125,7 +129,7 @@
   (let [stop-chan        (async/chan)
         event-to-effects (event->effects datastore-connection config)]
     (go-loop []
-      (encore/when-let [[[event-id :as event] chan]
+      (encore/when-let [[[event-id _ event-meta :as event] chan]
                         (async/alts! [event-chan stop-chan] :priority true)
 
                         continue?
@@ -139,7 +143,7 @@
                            error
                            [[:event-consumer/error
                              {:error error
-                              :data  {:id event-id}}
+                              :data  (assoc event-meta :id event-id)}
                              {:error? true}]])
 
                           selected-chan

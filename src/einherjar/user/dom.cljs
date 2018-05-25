@@ -38,7 +38,8 @@
                  update-touched
                  update-error
                  validator
-                 on-submit]} ::el.dm.mxn/form} state]
+                 on-submit
+                 disable-button]} ::el.dm.mxn/form} state]
     [:div
      [:form {:on-submit on-submit}
       (for [[k field] fields
@@ -63,19 +64,11 @@
                                        (let [error (current-validator value)]
                                          (update-error assoc k error)))))
                    :on-focus      #(encore/do-nil
-                                    (update-touched assoc :first? false))))
+                                    (update-touched assoc k true))))
            k)])
       [:div
        (rum.mui/raised-button
         {:primary  true
          :type     :submit
          :label    "Login"
-         :disabled (or (true? (:first? touched))
-                       (->> (dissoc touched :first?)
-                            (map val)
-                            (some false?)
-                            (boolean))
-                       (->> error
-                            (map val)
-                            (some encore/nblank-str?)
-                            (boolean)))})]]]))
+         :disabled (disable-button)})]]]))

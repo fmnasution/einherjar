@@ -14,7 +14,7 @@
                             map?
                             [specter/MAP-VALS p]
 
-                            vector?
+                            coll?
                             [specter/ALL p]
 
                             any?
@@ -30,29 +30,35 @@
 
 (defn- validation->validator
   [validation]
-  (fn [v]
-    (let [result (->> validation
-                      (spec/assert ::validation)
-                      (map (fn [[x y]]
-                             (let [validate-fn (encore/cond!
-                                                (keyword? x)
-                                                #(spec/valid? x %)
+  (let [pred-fn (fn [pred]
+                  (encore/cond
+                    (keyword? pred)
+                    #(spec/valid? pred %)
 
-                                                (fn? x)
-                                                x)
+                    (fn? pred)
+                    pred))
+        message-fn (fn [message]
+                     (encore/cond
+                       (string? message)
+                       (constantly message)
 
-                                   ok? (validate-fn v)]
-                               (when-not ok?
-                                 (let [message-fn (encore/cond!
-                                                   (string? y)
-                                                   (constantly y)
-
-                                                   (fn? y)
-                                                   y)]
-                                   (message-fn v))))))
-                      (filter some?)
-                      (first))]
-      (if (some? result)
+                       (fn? message)
+                       message))
+        validation (->> validation
+                        (spec/assert ::validation)
+                        (specter/multi-transform
+                         [specter/ALL
+                          (specter/multi-path
+                           [specter/FIRST
+                            (specter/terminal pred-fn)]
+                           [specter/LAST
+                            (specter/terminal message-fn)])]))]
+    (fn [v]
+      (if-let [result (->> validation
+                           (keep (fn [[pred message]]
+                                   (when (pred v)
+                                     (message v))))
+                           (first))]
         result
         ""))))
 
@@ -70,6 +76,19 @@
   [data]
   (specter/transform [MAP-LEAF] validation->validator data))
 
+(defn- disable-button?
+  [touched error]
+  (or (true? (::first? touched))
+      (->> touched
+           (specter/setval [::first?] specter/NONE)
+           (specter/select [LEAF])
+           (some false?)
+           (boolean))
+      (->> error
+           (specter/select [LEAF])
+           (some encore/nblank-str?)
+           (boolean))))
+
 (defn form
   [{:keys [fields validator initial check-touched? on-submit]
     :or   {initial        {}
@@ -81,33 +100,33 @@
         error-init   (generate-error initial)
         error_       (atom error-init)
         validator    (generate-validator validator)]
-    {:will-mount   (fn [{component :rum/react-component :as state}]
-                     (let [watch-fn       (fn [_ _ old-state next-state]
-                                            (when (not= old-state next-state)
-                                              (rum/request-render component)))
-                           new-updater-fn (fn [state_]
+    {:will-mount (fn [{component :rum/react-component :as state}]
+                   (let [watch-fn       (fn [_ _ old-state next-state]
+                                          (when (not= old-state next-state)
+                                            (rum/request-render component)))
+                         new-updater-fn (fn [state_]
+                                          (fn [& args]
+                                            (apply swap! state_ args)))]
+                     (add-watch data_ ::form-data watch-fn)
+                     (add-watch error_ ::form-error watch-fn)
+                     (add-watch touched_ ::form-touched watch-fn)
+                     (let [touched-updater (new-updater-fn touched_)
+                           form-option     {:update-data
+                                            (new-updater-fn data_)
+
+                                            :update-touched
                                             (fn [& args]
-                                              (apply swap! state_ args)))]
-                       (add-watch data_ ::form-data watch-fn)
-                       (add-watch error_ ::form-error watch-fn)
-                       (add-watch touched_ ::form-touched watch-fn)
-                       (let [touched-updater (new-updater-fn touched_)
-                             form-option     {:update-data
-                                              (new-updater-fn data_)
+                                              (touched-updater
+                                               assoc
+                                               ::first?
+                                               false)
+                                              (apply
+                                               touched-updater
+                                               args))
 
-                                              :update-touched
-                                              (fn [& args]
-                                                (touched-updater
-                                                 assoc
-                                                 ::first?
-                                                 false)
-                                                (apply
-                                                 touched-updater
-                                                 args))
-
-                                              :update-error
-                                              (new-updater-fn error_)}]
-                         (assoc state ::form form-option))))
+                                            :update-error
+                                            (new-updater-fn error_)}]
+                       (assoc state ::form form-option))))
      :will-unmount (fn [state]
                      (remove-watch data_ ::form-data)
                      (remove-watch error_ ::form-error)
@@ -118,13 +137,15 @@
                      (assoc state ::form {}))
      :wrap-render  (fn [render-fn]
                      (fn [{[manager] :rum/args :as state}]
-                       (let [data  {:fields    fields
-                                    :validator validator
-                                    :on-submit #(encore/do-nil
-                                                 (on-submit manager @data_))
-                                    :data      @data_
-                                    :touched   @touched_
-                                    :error     @error_}
+                       (let [data  {:fields         fields
+                                    :validator      validator
+                                    :on-submit      #(encore/do-nil
+                                                      (on-submit manager @data_))
+                                    :disable-button #(disable-button? @touched_
+                                                                      @error_)
+                                    :data           @data_
+                                    :touched        @touched_
+                                    :error          @error_}
                              state (update state ::form encore/merge data)]
                          (render-fn state))))}))
 
@@ -136,3 +157,4 @@
                                          :pred fn?)
                                 (spec/or :message     encore/nblank-str?
                                          :constructor fn?)))))
+

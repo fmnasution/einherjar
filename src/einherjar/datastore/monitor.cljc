@@ -1,7 +1,6 @@
 (ns einherjar.datastore.monitor
   (:require
    [mount.core :refer [defstate]]
-   [datascript.core :as datascript]
    [datascript-schema.core :as datascript.schema]
    [taoensso.timbre :as timbre]
    [einherjar.async.event :as asnc.evt]
@@ -64,10 +63,9 @@
 ;; ---- datastore tx pipeliner ----
 
 (defn- process-tx-report
-  [tx-report]
-  (-> tx-report
-      (update :db-after dtst.conn/create-datastore-database)
-      (update :db-before dtst.conn/create-datastore-database)))
+  [datastore-connection]
+  (fn [tx-report]
+    (dtst.conn/process-tx-report datastore-connection tx-report)))
 
 (defn- tx-report->event
   [tx-report]
@@ -81,7 +79,7 @@
               1
               (:event-chan @asnc.evt/event-dispatcher)
               (comp
-               (map process-tx-report)
+               (map (process-tx-report @dtst.conn/datastore-connection))
                (map tx-report->event))
               (:tx-report-chan @datastore-tx-monitor)
               (fn [error]

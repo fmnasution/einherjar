@@ -2,7 +2,6 @@
   (:require
    [cljs-react-material-ui.rum :as rum.mui]
    [rum.core :as rum :refer [defcs]]
-   [com.rpl.specter :as specter :include-macros true]
    [taoensso.encore :as encore]
    [einherjar.element.dom.mixin :as el.dm.mxn]
    [einherjar.element.manager :as el.mng]))

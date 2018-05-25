@@ -1,6 +1,5 @@
 (ns einherjar.datastore.impl.datomic
   (:require
-   [com.rpl.specter :as specter]
    [clojure.spec.alpha :as spec]
    [datomic.api :as datomic]
    [taoensso.encore :as encore]
@@ -8,10 +7,14 @@
 
 ;; ---- datomic database ----
 
+(declare -process-tx-report)
+
 (defrecord DatomicDatabase [db]
   dtst.prt/IDatastore
   (kind [_] :datomic)
   (internal [this] (:db this))
+  (process-tx-report [_ tx-report]
+    (-process-tx-report tx-report))
 
   dtst.prt/IDatastoreDatabase
   (q [{:keys [db]} query args]
@@ -27,24 +30,24 @@
 
 ;; ---- datomic connection ----
 
-(defn- process-tx-report
+(defn- -process-tx-report
   [tx-report]
-  (specter/multi-transform
-   [(specter/multi-path
-     [:db-after (specter/terminal new-datomic-database)]
-     [:db-before (specter/terminal new-datomic-database)])]
-   tx-report))
+  (-> tx-report
+      (update :db-after new-datomic-database)
+      (update :db-before new-datomic-database)))
 
 (defrecord DatomicConnection [conn]
   dtst.prt/IDatastore
   (kind [_] :datomic)
   (internal [this] (:conn this))
+  (process-tx-report [_ tx-report]
+    (-process-tx-report tx-report))
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
     (-> (datomic/transact conn tx-data)
         (deref)
-        (process-tx-report)))
+        (-process-tx-report)))
   (transact [this tx-data]
     (dtst.prt/transact this tx-data {}))
   (db [{:keys [conn]}]

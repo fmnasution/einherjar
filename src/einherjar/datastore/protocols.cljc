@@ -2,7 +2,8 @@
 
 (defprotocol IDatastore
   (kind [this])
-  (internal [this]))
+  (internal [this])
+  (process-tx-report [this tx-report]))
 
 (defprotocol IDatastoreDatabase
   (q [this query args])

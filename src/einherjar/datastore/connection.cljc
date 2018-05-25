@@ -1,7 +1,6 @@
 (ns einherjar.datastore.connection
   (:require
    [mount.core :refer [defstate]]
-   [com.rpl.specter :as specter :include-macros true]
    [datascript.core :as datascript]
    [taoensso.timbre :as timbre]
    [taoensso.encore :as encore]
@@ -18,12 +17,16 @@
 
 ;; ---- datastore database ----
 
+(declare -process-tx-report)
+
 (defrecord DatastoreDatabase [db]
   dtst.prt/IDatastore
   (kind [{:keys [db]}]
     (dtst.prt/kind db))
   (internal [{:keys [db]}]
     (dtst.prt/internal db))
+  (process-tx-report [{:keys [db]} tx-report]
+    (-process-tx-report (dtst.prt/process-tx-report db tx-report)))
 
   dtst.prt/IDatastoreDatabase
   (q [{:keys [db]} query args]
@@ -37,25 +40,13 @@
   [db]
   (->DatastoreDatabase db))
 
-(defn create-datastore-database
-  [db]
-  (new-datastore-database
-   (encore/cond!
-    #?@(:clj [(instance? datomic.Database db)
-              (dtst.ipl.dtm/new-datomic-database db)])
-
-    (datascript/db? db)
-    (dtst.ipl.dts/new-datascript-database db))))
-
 ;; ---- datastore connection ----
 
-(defn- process-tx-report
+(defn- -process-tx-report
   [tx-report]
-  (specter/multi-transform
-   [(specter/multi-path
-     [:db-after (specter/terminal new-datastore-database)]
-     [:db-before (specter/terminal new-datastore-database)])]
-   tx-report))
+  (-> tx-report
+      (update :db-after new-datastore-database)
+      (update :db-before new-datastore-database)))
 
 (defrecord DatastoreConnection [conn]
   dtst.prt/IDatastore
@@ -63,10 +54,12 @@
     (dtst.prt/kind conn))
   (internal [{:keys [conn]}]
     (dtst.prt/internal conn))
+  (process-tx-report [{:keys [conn]} tx-report]
+    (-process-tx-report (dtst.prt/process-tx-report conn tx-report)))
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
-    (process-tx-report (dtst.prt/transact conn tx-data tx-meta)))
+    (-process-tx-report (dtst.prt/transact conn tx-data tx-meta)))
   (transact [{:keys [conn]} tx-data]
     (dtst.prt/transact conn tx-data))
   (db [{:keys [conn]}]
@@ -106,6 +99,10 @@
 (defn internal
   [datastore]
   (dtst.prt/internal datastore))
+
+(defn process-tx-report
+  [datastore tx-report]
+  (dtst.prt/process-tx-report datastore tx-report))
 
 (defn transact
   ([datastore-connection tx-data tx-meta]

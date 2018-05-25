@@ -1,6 +1,5 @@
 (ns einherjar.datastore.impl.datascript
   (:require
-   [com.rpl.specter :as specter :include-macros true]
    [datascript.core :as datascript]
    [taoensso.encore :as encore]
    [einherjar.datastore.protocols :as dtst.prt]
@@ -9,10 +8,14 @@
 
 ;; ---- datascript database ----
 
+(declare -process-tx-report)
+
 (defrecord DatascriptDatabase [db]
   dtst.prt/IDatastore
   (kind [_] :datascript)
   (internal [this] (:db this))
+  (process-tx-report [_ tx-report]
+    (-process-tx-report tx-report))
 
   dtst.prt/IDatastoreDatabase
   (q [{:keys [db]} query args]
@@ -28,24 +31,24 @@
 
 ;; ---- datascript connection ----
 
-(defn- process-tx-report
+(defn- -process-tx-report
   [tx-report]
-  (specter/multi-transform
-   [(specter/multi-path
-     [:db-after (specter/terminal new-datascript-database)]
-     [:db-before (specter/terminal new-datascript-database)])]
-   tx-report))
+  (-> tx-report
+      (update :db-after new-datascript-database)
+      (update :db-before new-datascript-database)))
 
 (defrecord DatascriptConnection [conn]
   dtst.prt/IDatastore
   (kind [_] :datascript)
   (internal [this] (:conn this))
+  (process-tx-report [_ tx-report]
+    (-process-tx-report tx-report))
 
   dtst.prt/IDatastoreConnection
   (transact [{:keys [conn]} tx-data tx-meta]
     (-> (datascript/transact conn tx-data tx-meta)
         (deref)
-        (process-tx-report)))
+        (-process-tx-report)))
   (transact [this tx-data]
     (dtst.prt/transact this tx-data {}))
   (db [{:keys [conn]}]

@@ -27,5 +27,6 @@
 ;; ---- spec ----
 
 (spec/def ::command
-  (spec/nilable (spec/cat :command-id encore/qualified-keyword?
-                          :option     (spec/* map?))))
+  (spec/nilable (spec/cat :command-id   encore/qualified-keyword?
+                          :command-data (spec/? map?)
+                          :command-meta (spec/? map?))))

@@ -155,3 +155,11 @@
 
 (spec/def ::datascript-temp-eid
   encore/neg-int?)
+
+#?(:clj
+   (spec/def ::datomic-temp-eid
+     #(instance? datomic.db.DbId %)))
+
+(spec/def ::temp-eid
+  (spec/or #?@(:clj [:datomic ::datomic-temp-eid])
+           :datascript ::datascript-temp-eid))

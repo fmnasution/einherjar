@@ -109,7 +109,7 @@
  (fn [{:keys [datastore-connection]} [_ {:keys [tx-data tx-meta]}]]
    (let [kind    (dtst.conn/kind datastore-connection)
          tx-data (into []
-                       (mn.dtst/xupdate-tx-data kind)
+                       (mn.dtst/xbootstrap-tx-data kind)
                        tx-data)]
      (if (map? tx-meta)
        (dtst.conn/transact datastore-connection tx-data tx-meta)

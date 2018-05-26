@@ -11,7 +11,7 @@
     lhandler :location/handler
     lroute-params :location/route-params}]
   (encore/conj-when
-   []
+   [[:db/add eid :websocket-remote/client? true]]
    (when entity-id
      [:db/add eid :db.entity/id entity-id])
    (when lhandler

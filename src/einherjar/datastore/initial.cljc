@@ -24,7 +24,7 @@
                          schemas
                          {:index-all? true
                           :gen-all?   true})
-                        (into [] (mn.dtst/xupdate-tx-data kind) datas)))))
+                        (into [] (mn.dtst/xbootstrap-tx-data kind) datas)))))
 
 #?(:clj
    (defn- process-norm-map

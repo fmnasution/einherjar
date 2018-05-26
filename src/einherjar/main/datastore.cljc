@@ -1,10 +1,13 @@
 (ns einherjar.main.datastore
   (:require
+   [clojure.set :as set]
    [taoensso.encore :as encore]
    [datascript.core :as datascript]
    [einherjar.datastore.connection :as dtst.conn]
-   #?@(:clj  [[datomic-schema.schema :refer [schema fields]]]
-       :cljs [[goog.crypt.base64 :as base64]]))
+   #?@(:clj  [[clojure.spec.alpha :as spec]
+              [datomic-schema.schema :refer [schema fields]]]
+       :cljs [[cljs.spec.alpha :as spec]
+              [goog.crypt.base64 :as base64]]))
   #?(:clj
      (:import
       [java.util Base64])))
@@ -63,6 +66,35 @@
   [kind data]
   data)
 
-(defn xupdate-tx-data
+(defn- date-created-tx
+  [tempid now]
+  [[:db.fn/cas tempid :db.entity/created-at nil now]])
+
+(defn- generate-date-created
+  [rf]
+  (let [now      (encore/now-dt)
+        tempids_ (volatile! #{})
+        #?@(:cljs [client-eids_ (volatile! #{})])]
+    (fn
+      ([]
+       (rf))
+      ([container]
+       (let [temp-eids #?(:clj  @tempids_
+                          :cljs (set/intersection @tempids_ @client-eids_))]
+         (rf (transduce (mapcat #(date-created-tx % now))
+                        rf
+                        container
+                        temp-eids))))
+      ([container [_ eid #?@(:cljs [attr value]) :as data]]
+       (when (spec/valid? ::dtst.conn/temp-eid eid)
+         (vswap! tempids_ conj eid))
+       #?(:cljs (when (and (= :websocket-remote/client? attr)
+                           (true? value))
+                  (vswap! client-eids_ conj eid)))
+       (rf container data)))))
+
+(defn xbootstrap-tx-data
   [kind]
-  (map #(update-data kind %)))
+  (comp
+   generate-date-created
+   (map #(update-data kind %))))

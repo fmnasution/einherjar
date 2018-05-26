@@ -17,28 +17,32 @@
 
 #?(:clj
    (defn- init-config->tx-data
-     [{:keys [schemas datas] :as init-config}]
-     (encore/into-all []
-                      (datomic.schema/generate-schema schemas {:index-all? true
-                                                               :gen-all?   true})
-                      datas)))
+     [kind]
+     (fn [{:keys [schemas datas] :as init-config}]
+       (encore/into-all []
+                        (datomic.schema/generate-schema
+                         schemas
+                         {:index-all? true
+                          :gen-all?   true})
+                        (into [] (mn.dtst/xupdate-tx-data kind) datas)))))
 
 #?(:clj
    (defn- process-norm-map
-     [norm-map]
+     [kind norm-map]
      (specter/transform [specter/MAP-VALS (specter/must :txes)]
-                        #(into [] (map init-config->tx-data) %)
+                        #(into [] (map (init-config->tx-data kind)) %)
                         norm-map)))
 
 (defn- bootstrap-datastore!
   [datastore-connection norm-map]
-  (case (dtst.conn/kind datastore-connection)
-    :datomic
-    #?(:clj  (datomic.conform/ensure-conforms
-              (dtst.conn/internal datastore-connection)
-              (process-norm-map (spec/assert ::norm-map norm-map)))
-       :cljs nil)
-    :datascript {}))
+  (let [kind (dtst.conn/kind datastore-connection)]
+    (case kind
+      :datomic
+      #?(:clj  (datomic.conform/ensure-conforms
+                (dtst.conn/internal datastore-connection)
+                (process-norm-map kind (spec/assert ::norm-map norm-map)))
+         :cljs nil)
+      :datascript {})))
 
 (defstate datastore-bootstrapper
   :start (do (timbre/info "Bootstrappting datastore...")

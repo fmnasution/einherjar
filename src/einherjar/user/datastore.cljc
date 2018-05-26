@@ -20,14 +20,11 @@
                                     [password :string]
                                     [emails :string :many :unique-value]))]}
                                {:datas
-                                (as-> {:user/name     "admin"
-                                       :user/password "admin"
-                                       :user/emails   ["admin@einherjar.io"]} <>
-                                  (mn.dtst/assoc-nx-eid-id <> kind :db.part/user)
-                                  (user->tx-data <>)
-                                  (into []
-                                        (mn.dtst/xupdate-tx-data kind)
-                                        <>))}]
+                                (-> {:user/name     "admin"
+                                     :user/password "admin"
+                                     :user/emails   ["admin@einherjar.io"]}
+                                    (mn.dtst/assoc-nx-eid-id kind :db.part/user)
+                                    (user->tx-data))}]
                     :requires [:einherjar.main.datastore/v1]}}
        :cljs nil)
 

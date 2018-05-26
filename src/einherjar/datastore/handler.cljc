@@ -4,25 +4,8 @@
    [einherjar.async.effect :as asnc.efc]
    [einherjar.datastore.connection :as dtst.conn]
    [einherjar.datastore.sync :as dtst.snc]
-   [einherjar.main.datastore :as mn.dtst]))
-
-;; ---- tx meta ----
-
-(defn should-sync?
-  [{:keys [tx-meta] :as tx-report}]
-  (:datastore-connection/sync? (:tx-meta tx-report) true))
-
-(defn should-sync
-  [tx-meta sync?]
-  (assoc tx-meta :datastore-connection/sync? sync?))
-
-(defn bootstrap-schema?
-  [{:keys [tx-meta] :as tx-report}]
-  (:datastore-connection/bootstrap-schema? tx-meta false))
-
-(defn bootstrap-schema
-  [tx-meta bootstrap?]
-  (assoc tx-meta :datastore-connection/bootstrap-schema? bootstrap?))
+   [einherjar.main.datastore :as mn.dtst]
+   [einherjar.datastore.util :as dtst.utl]))
 
 ;; ---- event handler ----
 
@@ -36,10 +19,10 @@
  (fn [_ [_ tx-report]]
    (encore/conj-when
     []
-    (when (should-sync? tx-report)
+    (when (dtst.utl/should-sync? tx-report)
       [:event-dispatcher/dispatch
        {:event [:datastore-connection/sync-tx-report tx-report]}])
-    (when (bootstrap-schema? tx-report)
+    (when (dtst.utl/bootstrap-schema? tx-report)
       [:event-dispatcher/dispatch
        {:event [:datastore-connection/request-data]}])
     #?(:cljs [:react-element/remount tx-report]))))
@@ -62,8 +45,8 @@
    (let [tx-data (into []
                        (dtst.snc/xdatoms->remote-tx db-before db-after)
                        tx-data)
-         tx-meta (should-sync tx-meta #?(:clj  false
-                                         :cljs true))
+         tx-meta (dtst.utl/should-sync tx-meta #?(:clj  false
+                                                  :cljs true))
          event   [:datastore-connection/incoming-remote-tx {:tx-data tx-data
                                                             :tx-meta tx-meta}]]
      [[#?(:clj  :websocket-server/publish
@@ -99,8 +82,8 @@
                           (dtst.snc/xpulled-data->remote-tx datastore-database)
                           (dtst.snc/pull-all-schema datastore-database))
             tx-meta (-> {}
-                        (should-sync false)
-                        (bootstrap-schema true))]
+                        (dtst.utl/should-sync false)
+                        (dtst.utl/bootstrap-schema true))]
         [[:websocket-server/publish
           {:websocket/?reply-fn   ?reply-fn
            :websocket/?reply-data {:tx-data tx-data
@@ -113,7 +96,7 @@
       (let [tx-data (into []
                           (dtst.snc/xpulled-data->remote-tx datastore-database)
                           (dtst.snc/pull-all-data datastore-database))
-            tx-meta (should-sync {} false)]
+            tx-meta (dtst.utl/should-sync {} false)]
         [[:websocket-server/publish
           {:websocket/?reply-fn   ?reply-fn
            :websocket/?reply-data {:tx-data tx-data

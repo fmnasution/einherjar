@@ -4,7 +4,8 @@
    [einherjar.datastore.connection :as dtst.conn]
    [einherjar.main.datastore :as mn.dtst]
    [einherjar.router.datastore :as rtr.dtst]
-   [einherjar.datastore.handler :as dtst.hdl]))
+   [einherjar.datastore.handler :as dtst.hdl]
+   [einherjar.datastore.util :as dtst.utl]))
 
 ;; ---- event handler ----
 
@@ -22,6 +23,6 @@
             tx-data (-> location
                         (mn.dtst/assoc-nx-eid-id kind :db.part/user)
                         (rtr.dtst/location->tx-data))
-            tx-meta (dtst.hdl/should-sync {} false)]
+            tx-meta (dtst.utl/should-sync {} false)]
         [[:datastore-connection/transact {:tx-data tx-data
                                           :tx-meta tx-meta}]]))))

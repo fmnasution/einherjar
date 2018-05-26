@@ -56,7 +56,7 @@
     (fn [v]
       (if-let [result (->> validation
                            (keep (fn [[pred message]]
-                                   (when (pred v)
+                                   (when-not (pred v)
                                      (message v))))
                            (first))]
         result
@@ -81,13 +81,11 @@
   (or (true? (::first? touched))
       (->> touched
            (specter/setval [::first?] specter/NONE)
-           (specter/select [LEAF])
-           (some false?)
-           (boolean))
+           (specter/select-first [LEAF false?])
+           (some?))
       (->> error
-           (specter/select [LEAF])
-           (some encore/nblank-str?)
-           (boolean))))
+           (specter/select-first [LEAF encore/nblank-str?])
+           (some?))))
 
 (defn form
   [{:keys [fields validator initial check-touched? on-submit]
@@ -110,22 +108,16 @@
                      (add-watch data_ ::form-data watch-fn)
                      (add-watch error_ ::form-error watch-fn)
                      (add-watch touched_ ::form-touched watch-fn)
-                     (let [touched-updater (new-updater-fn touched_)
-                           form-option     {:update-data
-                                            (new-updater-fn data_)
+                     (let [form-option {:fields fields
 
-                                            :update-touched
-                                            (fn [& args]
-                                              (touched-updater
-                                               assoc
-                                               ::first?
-                                               false)
-                                              (apply
-                                               touched-updater
-                                               args))
+                                        :update-data
+                                        (new-updater-fn data_)
 
-                                            :update-error
-                                            (new-updater-fn error_)}]
+                                        :update-touched
+                                        (new-updater-fn touched_)
+
+                                        :update-error
+                                        (new-updater-fn error_)}]
                        (assoc state ::form form-option))))
      :will-unmount (fn [state]
                      (remove-watch data_ ::form-data)
@@ -137,8 +129,7 @@
                      (assoc state ::form {}))
      :wrap-render  (fn [render-fn]
                      (fn [{[manager] :rum/args :as state}]
-                       (let [data  {:fields         fields
-                                    :validator      validator
+                       (let [data  {:validator      validator
                                     :on-submit      #(encore/do-nil
                                                       (on-submit manager @data_))
                                     :disable-button #(disable-button? @touched_

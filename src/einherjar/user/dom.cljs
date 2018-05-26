@@ -23,10 +23,6 @@
                              {:credential data}]]
                   (el.mng/dispatch! manager event)))})
 
-(defn- button-disabled?
-  [touched error]
-  ())
-
 (defcs <login-form> < (el.dm.mxn/form (login-form))
   [state manager]
   (let [{{:keys [fields
@@ -54,16 +50,20 @@
                    :on-blur       #(encore/do-nil
                                     (let [error (current-validator
                                                  current-value)]
+                                      (update-touched assoc
+                                                      ::el.dm.mxn/first?
+                                                      false)
                                       (update-touched assoc k true)
                                       (update-error assoc k error)))
                    :on-change     (fn [e]
                                     (let [value (-> e .-target .-value)]
                                       (encore/do-nil
+                                       (update-touched assoc
+                                                       ::el.dm.mxn/first?
+                                                       false)
                                        (update-data assoc k value)
                                        (let [error (current-validator value)]
-                                         (update-error assoc k error)))))
-                   :on-focus      #(encore/do-nil
-                                    (update-touched assoc k true))))
+                                         (update-error assoc k error)))))))
            k)])
       [:div
        (rum.mui/raised-button
